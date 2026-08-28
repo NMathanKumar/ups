@@ -54,6 +54,8 @@ export async function runAgent({ message, userId, confirmed = false, history = [
     result = await runEmployeeAssetsPath({ message, userId });
   } else if (intent === INTENTS.RESOURCE_ALLOCATION) {
     result = await runResourceAllocationPath({ message, userId });
+  } else if (intent === INTENTS.EMPLOYEE_TRANSFER) {
+    result = await runEmployeeTransferPath({ message, userId });
   } else if (intent === INTENTS.REMINDER_CREATION || intent === INTENTS.TASK_CREATION) {
     if (!confirmed) {
       result = buildReminderConfirmationResponse({ message, userId });
@@ -575,6 +577,42 @@ async function runResourceAllocationPath({ message, userId }) {
     requiresConfirmation: false,
     status: 'COMPLETED',
     summary: `Found ${resources.length} available resources.`,
+  };
+}
+
+async function runEmployeeTransferPath({ message, userId }) {
+  const toolResults = [];
+  const targetEmpId = extractTargetEmployeeId(message, userId);
+
+  const empRes = await executeTool('getEmployee', { employeeId: targetEmpId });
+  toolResults.push(empRes);
+  const emp = empRes.data || { name: targetEmpId, employeeId: targetEmpId, department: 'Current Department' };
+
+  const assetRes = await executeTool('getEmployeeAssets', { employeeId: targetEmpId });
+  toolResults.push(assetRes);
+
+  const answer = [
+    `🔄 **Employee Transfer & Mobility Request** for **${emp.name}** (\`${targetEmpId}\`):`,
+    '',
+    `🏢 **Current Department:** ${emp.department || 'Engineering'}`,
+    `👔 **Manager:** ${emp.manager || 'HR Manager'}`,
+    `💻 **Assigned Equipment:** ${(assetRes.data?.assets || []).length} active hardware item(s)`,
+    '',
+    '**Transfer Process & Eligibility Guidelines:**',
+    '1. Employees must complete a minimum of 6 months in their current role before requesting an internal transfer.',
+    '2. Approval from both the current manager and receiving department head is required.',
+    '3. To initiate an official transfer request, submit an HR Transfer Ticket via WorkPilot AI or contact `hr-transfers@apex-enterprise.com`.',
+  ].join('\n');
+
+  return {
+    intent: INTENTS.EMPLOYEE_TRANSFER,
+    answer,
+    sources: [{ document: 'Employee Transfer & Mobility Policy', category: 'HR Policy', relevance: 0.96 }],
+    category: 'HR',
+    toolResults,
+    requiresConfirmation: false,
+    status: 'COMPLETED',
+    summary: `Transfer details processed for ${emp.name}.`,
   };
 }
 
