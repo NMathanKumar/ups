@@ -106,14 +106,18 @@ export default function Auth({ onLoginSuccess }) {
 
   return (
     <div className="auth-container" style={{
-      minHeight: '100vh',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%)',
       padding: '24px 16px',
-      position: 'relative',
-      overflow: 'hidden',
+      overflowY: 'auto',
+      zIndex: 9999,
       fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)',
     }}>
       {/* Background glow Orbs */}
@@ -357,26 +361,6 @@ export default function Auth({ onLoginSuccess }) {
               >
                 {loading ? 'Authenticating with AWS Cognito...' : 'Sign In to Workspace'}
               </button>
-
-              {/* Demo Fill Quick Action */}
-              <div style={{ marginTop: 18, textAlign: 'center' }}>
-                <button
-                  type="button"
-                  onClick={fillDemoLogin}
-                  style={{
-                    background: '#f8fafc',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: 8,
-                    padding: '6px 14px',
-                    fontSize: '0.75rem',
-                    color: '#475569',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                  }}
-                >
-                  ⚡ Fill Demo Credentials (Priya Sharma)
-                </button>
-              </div>
             </form>
           ) : (
             /* SIGN UP FORM */
