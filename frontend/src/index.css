@@ -151,10 +151,7 @@ input, textarea { font-family: inherit; }
 }
 
 /* ============================================
-   SIDEBAR
-   ============================================ */
-/* ============================================
-   SIDEBAR (White Light Theme with Blue Active State)
+   SIDEBAR (Amazon Squall Navy & Amber Royal Theme)
    ============================================ */
 .sidebar {
   position: fixed;
@@ -162,9 +159,9 @@ input, textarea { font-family: inherit; }
   left: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background: #ffffff;
-  border-right: 1px solid #e2e8f0;
-  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.04);
+  background: #232f3e;
+  border-right: 1px solid #131921;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   z-index: 100;
@@ -177,19 +174,20 @@ input, textarea { font-family: inherit; }
   align-items: center;
   gap: 12px;
   padding: 20px 20px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #131921;
+  background: #131921;
 }
 
 .sidebar-brand-icon {
   width: 38px;
   height: 38px;
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  background: linear-gradient(135deg, #ff9900 0%, #ec7211 100%);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 14px rgba(255, 153, 0, 0.4);
 }
 
 .sidebar-brand-icon svg {
@@ -204,18 +202,19 @@ input, textarea { font-family: inherit; }
 }
 
 .sidebar-brand-name {
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #ffffff;
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .sidebar-brand-tagline {
   font-size: 0.6875rem;
-  color: #64748b;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  color: #ff9900;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .sidebar-nav {
@@ -229,7 +228,7 @@ input, textarea { font-family: inherit; }
 .sidebar-section-label {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: #8795a1;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 8px 10px 4px;
@@ -242,27 +241,27 @@ input, textarea { font-family: inherit; }
   gap: 10px;
   padding: 10px 14px;
   border-radius: 12px;
-  color: #475569;
+  color: #eaedd1;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
-  margin-bottom: 3px;
+  margin-bottom: 4px;
   border: 1px solid transparent;
 }
 
 .sidebar-nav-item:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: #131921;
+  color: #ffffff;
 }
 
-/* SELECTED MENU ITEM — Vibrant Indigo/Blue Theme */
+/* SELECTED MENU ITEM — Amazon Amber Royal Gold */
 .sidebar-nav-item.active {
-  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  background: linear-gradient(135deg, #ff9900 0%, #ec7211 100%);
   color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
-  border-color: #4338ca;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(255, 153, 0, 0.45);
+  border-color: #ec7211;
 }
 
 .sidebar-nav-item.active svg {
@@ -273,37 +272,37 @@ input, textarea { font-family: inherit; }
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  color: #64748b;
+  color: #aab7b8;
   transition: color var(--transition-fast);
 }
 
 .sidebar-nav-item:hover svg {
-  color: #0f172a;
+  color: #ffffff;
 }
 
 .sidebar-nav-item .nav-badge {
   margin-left: auto;
-  background: #4f46e5;
-  color: #ffffff;
+  background: #ff9900;
+  color: #131921;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   padding: 2px 8px;
   border-radius: var(--radius-full);
   min-width: 20px;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   transition: all var(--transition-fast);
 }
 
 .sidebar-nav-item.active .nav-badge {
   background: #ffffff;
-  color: #4338ca;
+  color: #ec7211;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-divider {
   height: 1px;
-  background: #f1f5f9;
+  background: #131921;
   margin: 12px;
 }
 
@@ -315,8 +314,8 @@ input, textarea { font-family: inherit; }
 
 .sidebar-footer {
   padding: 14px 12px;
-  border-top: 1px solid #f1f5f9;
-  background: #fafafa;
+  border-top: 1px solid #131921;
+  background: #131921;
 }
 
 .sidebar-user {
@@ -325,21 +324,21 @@ input, textarea { font-family: inherit; }
   gap: 10px;
   padding: 8px 10px;
   border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  background: #232f3e;
+  border: 1px solid #37475a;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 .user-avatar {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #4f46e5, #818cf8);
+  background: linear-gradient(135deg, #ff9900, #ec7211);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: 800;
   color: white;
   flex-shrink: 0;
 }
@@ -352,7 +351,7 @@ input, textarea { font-family: inherit; }
 .user-name {
   font-size: 0.8125rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -360,8 +359,8 @@ input, textarea { font-family: inherit; }
 
 .user-role {
   font-size: 0.6875rem;
-  color: #64748b;
-  font-weight: 500;
+  color: #ffac31;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
