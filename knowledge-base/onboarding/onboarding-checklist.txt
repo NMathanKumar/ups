@@ -1,0 +1,36 @@
+Title:
+New Hire Onboarding Checklist
+
+Category:
+Onboarding
+
+Document Type:
+Checklist
+
+Last Updated:
+2026-01-15
+
+Content:
+Welcome to Apex Enterprise Inc.! This checklist outlines key activities to complete during your first 30 days.
+
+Day 1 Tasks:
+- Complete HR tax and direct deposit forms in HR Portal.
+- Set up SSO password and Duo Multi-Factor Authentication (MFA).
+- Collect and inspect company laptop from IT Helpdesk.
+- Attend HR Orientation Webinar at 2:00 PM.
+
+First Week Tasks:
+- Meet with line manager to set 30-day goals and review team roadmap.
+- Complete mandatory Security Awareness Training (due within 30 days).
+- Set up Slack profile, photo, and notification preferences.
+- Shadow your assigned onboarding buddy on 2 team projects.
+
+First Month Tasks:
+- Complete 30-day check-in review with line manager.
+- Submit initial professional development learning plan.
+
+Questions this document can answer:
+- What should I complete during my first week?
+- What documents do I need during onboarding?
+- What are the Day 1 onboarding requirements?
+- When is the 30-day manager check-in scheduled?

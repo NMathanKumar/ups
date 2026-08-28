@@ -1,0 +1,29 @@
+Title:
+Mandatory Cybersecurity Awareness Training 2026
+
+Category:
+Learning
+
+Document Type:
+Training Requirement
+
+Last Updated:
+2026-01-15
+
+Content:
+The Annual Cybersecurity Awareness Training 2026 is mandatory for all full-time, part-time, and contractor staff at Apex Enterprise Inc. The course covers phishing recognition, password hygiene, remote work security, and reporting security incidents.
+
+Important Rules:
+1. New hires must complete the Security Awareness Training within 30 days of their start date.
+2. Existing employees must complete annual refresher training by September 30 each year.
+3. Passing criteria: Score 80% or higher on the final assessment quiz (up to 3 retakes allowed).
+4. Failure to complete mandatory security training by the deadline will result in temporary suspension of network and email access.
+
+Employee Action:
+Log into the Learning Portal at learning.apex-enterprise.com, click "My Mandatory Courses", and launch "Annual Cybersecurity Awareness 2026".
+
+Questions this document can answer:
+- Which security training is mandatory?
+- When do I need to complete the security training?
+- What happens if I miss the security training deadline?
+- What score is required to pass the security training?

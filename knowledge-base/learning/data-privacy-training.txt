@@ -1,0 +1,27 @@
+Title:
+Data Privacy & Compliance Training
+
+Category:
+Learning
+
+Document Type:
+Training Requirement
+
+Last Updated:
+2026-01-15
+
+Content:
+Apex Enterprise Inc. requires Data Privacy & GDPR/CCPA Compliance Training for all personnel who handle customer data, employee records, or confidential intellectual property.
+
+Important Rules:
+1. New hires in HR, Product, Engineering, and Customer Operations must complete training within 45 days of start date.
+2. Annual renewal training is required by November 15 each year.
+3. Minimum passing score is 85%.
+
+Employee Action:
+Access learning.apex-enterprise.com and select "Data Privacy Fundamentals" under your assigned curriculum.
+
+Questions this document can answer:
+- Who needs to take the Data Privacy training?
+- What is the deadline for Data Privacy compliance training?
+- What score is required to pass Data Privacy training?

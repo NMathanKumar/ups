@@ -1,0 +1,26 @@
+Title:
+First-Week Guide & Orientation Schedule
+
+Category:
+Onboarding
+
+Document Type:
+Guide
+
+Last Updated:
+2026-01-15
+
+Content:
+Your first week at Apex Enterprise Inc. is structured to introduce you to company culture, team workflows, and enterprise tools.
+
+Weekly Schedule:
+Monday (Day 1): 9:00 AM Welcome Breakfast | 10:30 AM Hardware & IT Setup | 2:00 PM HR Orientation
+Tuesday (Day 2): 10:00 AM Team Standup Introduction | 11:30 AM Buddy Sync | 2:00 PM System Architecture Overview
+Wednesday (Day 3): 10:00 AM Product Demo Session | 1:00 PM Security Training Module | 3:30 PM Manager 1-on-1
+Thursday (Day 4): 10:00 AM Team Collaboration & Shadowing | 2:00 PM Tooling & Access Setup
+Friday (Day 5): 10:00 AM Weekly Team Retrospective | 3:00 PM First-Week Reflections & Manager Check-in
+
+Questions this document can answer:
+- What is the first-week orientation schedule?
+- When is the Monday HR orientation webinar?
+- When do I meet my onboarding buddy?

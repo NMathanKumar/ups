@@ -1,0 +1,29 @@
+Title:
+Work From Home (Remote Work) Policy
+
+Category:
+HR
+
+Document Type:
+Policy
+
+Last Updated:
+2026-01-15
+
+Content:
+Apex Enterprise Inc. supports flexible work arrangements. Full-time employees are eligible to work remotely (work from home) for up to 3 working days per week, provided their job role is designated as eligible for hybrid work. Core working hours during remote work days are 9:00 AM to 5:00 PM in the employee's local time zone.
+
+Important Rules:
+1. Prior manager approval in writing or via the HR Portal is mandatory before working remotely.
+2. Working remotely without prior manager approval is considered an unexcused absence.
+3. Remote work requires a secure, high-speed internet connection and an active company VPN session.
+4. Working remotely from an international location for more than 10 consecutive days requires formal HR and Legal clearance.
+
+Employee Action:
+To request remote work days, submit a "WFH Request" in the HR Portal at least 24 hours prior to the requested remote day, specifying the date(s) and confirming manager verbal or written approval.
+
+Questions this document can answer:
+- Can I work from home tomorrow?
+- How many days per week can I work remotely?
+- Do I need manager approval for remote work?
+- What are the core hours when working from home?

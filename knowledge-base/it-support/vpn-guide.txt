@@ -1,0 +1,32 @@
+Title:
+VPN Connection & Troubleshooting Guide
+
+Category:
+IT Support
+
+Document Type:
+Guide
+
+Last Updated:
+2026-01-15
+
+Content:
+Apex Enterprise Inc. uses GlobalProtect VPN (ApexSecure Global VPN) to provide secure access to internal applications, code repositories, and network shares. All remote work and off-site connections require an active VPN tunnel.
+
+Important Rules:
+1. Connecting to VPN requires your SSO username, password, and Duo MFA push approval.
+2. If VPN drops or fails to connect, follow these troubleshooting steps in order:
+   Step 1: Fully quit and restart the GlobalProtect VPN client.
+   Step 2: Verify your local home WiFi or hotspot connection is active.
+   Step 3: Switch gateway location in GlobalProtect from "Auto-Detect" to "vpn-backup.apex-enterprise.com".
+   Step 4: Clear the client cache by clicking Settings -> Clear Cache, then restart your laptop.
+3. If VPN remains disconnected after troubleshooting, submit an IT Support ticket.
+
+Employee Action:
+To log an IT support ticket for VPN issues, visit the IT Service Portal (itsm.apex-enterprise.com) or email it-support@apex-enterprise.com. Support response time for VPN outages is within 2 hours.
+
+Questions this document can answer:
+- My VPN is not connecting. What should I do?
+- How do I troubleshoot VPN issues?
+- What is the backup VPN gateway address?
+- What is the expected IT response time for VPN support?

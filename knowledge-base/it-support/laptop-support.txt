@@ -1,0 +1,28 @@
+Title:
+Laptop Repair & Hardware Support Policy
+
+Category:
+IT Support
+
+Document Type:
+Policy
+
+Last Updated:
+2026-01-15
+
+Content:
+Apex Enterprise Inc. provides standard laptop hardware (MacBook Pro 14" or Dell XPS 15) to all full-time employees. Laptops are automatically scheduled for hardware refresh every 36 months (3 years).
+
+Important Rules:
+1. For hardware failures, battery swelling, or physical damage, report the issue to IT Support immediately.
+2. Temporary loaner laptops are available at all corporate office IT Helpdesks within 4 hours of request.
+3. Remote employees will be shipped a replacement loaner laptop via overnight express delivery upon submitting an approved hardware ticket.
+
+Employee Action:
+Log a hardware incident ticket at itsm.apex-enterprise.com under "Hardware -> Laptop Support" and indicate whether you require an in-person loaner or overnight shipping.
+
+Questions this document can answer:
+- What should I do if my laptop breaks or has a hardware issue?
+- How often are company laptops replaced or refreshed?
+- How do remote employees get a replacement loaner laptop?
+- How fast can I get a loaner device at the office?

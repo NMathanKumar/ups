@@ -1,0 +1,30 @@
+Title:
+Employee Directory & Resource Links
+
+Category:
+Onboarding
+
+Document Type:
+Guide
+
+Last Updated:
+2026-01-15
+
+Content:
+Key enterprise portals, links, and emergency contact details for Apex Enterprise Inc. employees:
+
+Core Internal Portals:
+- HR Portal: hr.apex-enterprise.com (Leave, Benefits, Expense Reimbursements)
+- IT Service Portal: itsm.apex-enterprise.com (Hardware, Software Access, VPN)
+- Learning Portal: learning.apex-enterprise.com (Mandatory & Elective Courses)
+- Password Reset Portal: identity.apex-enterprise.com/reset
+
+Key Contacts:
+- HR Helpdesk: hr-help@apex-enterprise.com | x4356
+- IT Helpdesk: it-support@apex-enterprise.com | x4357
+- Emergency Facilities: facilities@apex-enterprise.com | x4911
+
+Questions this document can answer:
+- Where can I find key company website links?
+- What is the IT support email address and phone extension?
+- How do I contact the HR Helpdesk?

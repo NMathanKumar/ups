@@ -1,0 +1,28 @@
+Title:
+Attendance & Working Hours Policy
+
+Category:
+HR
+
+Document Type:
+Policy
+
+Last Updated:
+2026-01-15
+
+Content:
+Standard working hours at Apex Enterprise Inc. are 40 hours per week, Monday through Friday. Core collaborative hours are 10:00 AM to 4:00 PM local time, during which employees are expected to be available for team meetings, communication, and real-time collaboration.
+
+Important Rules:
+1. Employees must notify their line manager and HR before 8:30 AM if they are unable to attend work due to illness or an emergency.
+2. Unexcused tardiness or failure to report for 3 consecutive days without notification is treated as job abandonment.
+3. Flexible starting hours between 7:30 AM and 10:00 AM are allowed with manager concurrence, provided 8 working hours are completed daily.
+
+Employee Action:
+Report unscheduled absences immediately via email to absence@apex-enterprise.com and message your direct manager on Slack.
+
+Questions this document can answer:
+- What are the core working hours?
+- How many hours per week am I expected to work?
+- How do I report an unexpected absence or sick call?
+- Can I start my workday early or late?

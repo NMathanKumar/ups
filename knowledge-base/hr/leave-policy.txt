@@ -1,0 +1,28 @@
+Title:
+Annual Leave & Paid Time Off Policy
+
+Category:
+HR
+
+Document Type:
+Policy
+
+Last Updated:
+2026-01-15
+
+Content:
+Apex Enterprise Inc. provides full-time employees with 25 days of paid annual leave per calendar year. Annual leave accrues at a rate of 2.08 days per completed month of service. In addition to annual leave, employees receive 10 paid sick leave days per year for illness or medical appointments. Up to 5 unused annual leave days may be carried over into the following calendar year, but carried-over days must be used by March 31 of that year.
+
+Important Rules:
+1. Annual leave requests exceeding 3 consecutive business days must be submitted at least 5 business days in advance.
+2. Leave requests must be approved by the employee's direct manager via the HR Portal.
+3. Unused sick leave days do not carry over into the new calendar year and cannot be cashed out.
+
+Employee Action:
+To submit a leave request, log into the HR Portal (hr.apex-enterprise.com), select "Time Off", select the leave type (Annual Leave or Sick Leave), specify dates, and click "Submit for Approval".
+
+Questions this document can answer:
+- How many annual leave days do I get?
+- How many sick leave days are provided per year?
+- Can I carry over unused leave days into next year?
+- How far in advance must I request annual leave?

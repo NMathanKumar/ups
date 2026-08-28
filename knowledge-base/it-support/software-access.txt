@@ -1,0 +1,32 @@
+Title:
+Software Access Request Process
+
+Category:
+IT Support
+
+Document Type:
+Guide
+
+Last Updated:
+2026-01-15
+
+Content:
+Access to software tools and cloud applications at Apex Enterprise Inc. is governed by least-privilege security policies. Standard workplace tools (Slack, Zoom, Google Workspace, Jira) are automatically provisioned during onboarding.
+
+Important Rules:
+1. Specialized software (AWS Console, GitHub Enterprise, Figma, Tableau, Salesforce) requires manager approval.
+2. Requests for licensed software must specify business justification and project cost center.
+3. Standard SLA for software access provisioning is 24 business hours following manager sign-off.
+
+Employee Action:
+To request new software or application access:
+1. Go to the IT Service Portal (itsm.apex-enterprise.com/software).
+2. Select the required application from the Software Catalog.
+3. Provide your manager's email and business justification.
+4. Click "Submit Access Request".
+
+Questions this document can answer:
+- How do I request software access?
+- What software is provisioned automatically during onboarding?
+- Which applications require manager approval?
+- How long does it take for software access to be granted?
