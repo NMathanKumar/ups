@@ -33,6 +33,15 @@ export default function Assistant({ currentUser }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
+  const addToast = useCallback((message, type = 'success') => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, message, type }])
+  }, [])
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }, [])
+
   const sendMessage = useCallback(async (text, confirmed = false, originalPrompt = null) => {
     if (!text.trim()) return
     const queryText = originalPrompt || text
