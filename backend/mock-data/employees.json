@@ -1,0 +1,112 @@
+[
+  {
+    "employeeId": "EMP001",
+    "name": "Priya Sharma",
+    "email": "priya.sharma@apex-enterprise.com",
+    "department": "Engineering",
+    "role": "Software Engineer",
+    "managerId": "EMP010",
+    "location": "Bangalore",
+    "status": "ACTIVE",
+    "joinDate": "2022-03-15"
+  },
+  {
+    "employeeId": "EMP002",
+    "name": "Ravi Kumar",
+    "email": "ravi.kumar@apex-enterprise.com",
+    "department": "Engineering",
+    "role": "Senior Software Engineer",
+    "managerId": "EMP010",
+    "location": "Bangalore",
+    "status": "ACTIVE",
+    "joinDate": "2020-07-01"
+  },
+  {
+    "employeeId": "EMP003",
+    "name": "Aisha Patel",
+    "email": "aisha.patel@apex-enterprise.com",
+    "department": "HR",
+    "role": "HR Business Partner",
+    "managerId": "EMP011",
+    "location": "Mumbai",
+    "status": "ACTIVE",
+    "joinDate": "2021-01-10"
+  },
+  {
+    "employeeId": "EMP004",
+    "name": "James Chen",
+    "email": "james.chen@apex-enterprise.com",
+    "department": "IT",
+    "role": "IT Support Specialist",
+    "managerId": "EMP012",
+    "location": "Singapore",
+    "status": "ACTIVE",
+    "joinDate": "2023-05-20"
+  },
+  {
+    "employeeId": "EMP005",
+    "name": "Sarah Johnson",
+    "email": "sarah.johnson@apex-enterprise.com",
+    "department": "Engineering",
+    "role": "DevOps Engineer",
+    "managerId": "EMP010",
+    "location": "Bangalore",
+    "status": "ACTIVE",
+    "joinDate": "2021-09-01"
+  },
+  {
+    "employeeId": "EMP006",
+    "name": "Ankit Verma",
+    "email": "ankit.verma@apex-enterprise.com",
+    "department": "Engineering",
+    "role": "Frontend Developer",
+    "managerId": "EMP010",
+    "location": "Bangalore",
+    "status": "AVAILABLE",
+    "joinDate": "2023-01-15"
+  },
+  {
+    "employeeId": "EMP007",
+    "name": "Meera Nair",
+    "email": "meera.nair@apex-enterprise.com",
+    "department": "Engineering",
+    "role": "Backend Developer",
+    "managerId": "EMP010",
+    "location": "Bangalore",
+    "status": "AVAILABLE",
+    "joinDate": "2022-11-01"
+  },
+  {
+    "employeeId": "EMP008",
+    "name": "Intern Demo",
+    "email": "intern.demo@apex-enterprise.com",
+    "department": "Engineering",
+    "role": "Intern",
+    "managerId": "EMP010",
+    "location": "Bangalore",
+    "status": "ACTIVE",
+    "joinDate": "2026-06-01"
+  },
+  {
+    "employeeId": "EMP010",
+    "name": "David Okonkwo",
+    "email": "david.okonkwo@apex-enterprise.com",
+    "department": "Engineering",
+    "role": "Engineering Manager",
+    "managerId": "EMP020",
+    "location": "Bangalore",
+    "status": "ACTIVE",
+    "joinDate": "2019-03-01"
+  },
+  {
+    "employeeId": "demo-user",
+    "name": "Demo User",
+    "email": "demo.user@apex-enterprise.com",
+    "department": "Engineering",
+    "role": "Software Engineer",
+    "managerId": "EMP010",
+    "location": "Bangalore",
+    "status": "ACTIVE",
+    "joinDate": "2023-08-01"
+  }
+]

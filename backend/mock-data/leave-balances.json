@@ -1,0 +1,56 @@
+[
+  {
+    "employeeId": "EMP001",
+    "annualLeave": 18,
+    "sickLeave": 10,
+    "maternityLeaveEligible": true,
+    "maternityLeaveDays": 90,
+    "annualLeaveUsed": 5,
+    "sickLeaveUsed": 2
+  },
+  {
+    "employeeId": "EMP002",
+    "annualLeave": 20,
+    "sickLeave": 10,
+    "maternityLeaveEligible": false,
+    "maternityLeaveDays": 0,
+    "annualLeaveUsed": 8,
+    "sickLeaveUsed": 0
+  },
+  {
+    "employeeId": "EMP003",
+    "annualLeave": 20,
+    "sickLeave": 10,
+    "maternityLeaveEligible": true,
+    "maternityLeaveDays": 90,
+    "annualLeaveUsed": 12,
+    "sickLeaveUsed": 3
+  },
+  {
+    "employeeId": "EMP004",
+    "annualLeave": 15,
+    "sickLeave": 10,
+    "maternityLeaveEligible": false,
+    "maternityLeaveDays": 0,
+    "annualLeaveUsed": 3,
+    "sickLeaveUsed": 1
+  },
+  {
+    "employeeId": "EMP005",
+    "annualLeave": 20,
+    "sickLeave": 10,
+    "maternityLeaveEligible": true,
+    "maternityLeaveDays": 90,
+    "annualLeaveUsed": 6,
+    "sickLeaveUsed": 0
+  },
+  {
+    "employeeId": "demo-user",
+    "annualLeave": 18,
+    "sickLeave": 10,
+    "maternityLeaveEligible": true,
+    "maternityLeaveDays": 90,
+    "annualLeaveUsed": 3,
+    "sickLeaveUsed": 1
+  }
+]

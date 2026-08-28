@@ -1,0 +1,32 @@
+[
+  {
+    "projectId": "PROJ001",
+    "name": "Project Apollo",
+    "department": "Engineering",
+    "location": "Bangalore",
+    "status": "ACTIVE",
+    "headcount": 8,
+    "openPositions": 3,
+    "skills": ["Node.js", "React", "AWS"]
+  },
+  {
+    "projectId": "PROJ002",
+    "name": "HR Digital Transformation",
+    "department": "HR",
+    "location": "Mumbai",
+    "status": "ACTIVE",
+    "headcount": 4,
+    "openPositions": 2,
+    "skills": ["SAP", "Process Design"]
+  },
+  {
+    "projectId": "PROJ003",
+    "name": "Cloud Migration",
+    "department": "IT",
+    "location": "Singapore",
+    "status": "ACTIVE",
+    "headcount": 6,
+    "openPositions": 1,
+    "skills": ["AWS", "Terraform", "DevOps"]
+  }
+]

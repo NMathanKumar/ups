@@ -13,6 +13,12 @@
  */
 
 import { retrieveRelevantDocuments } from '../services/knowledgeBase.js';
+import {
+  getEmployee,
+  checkLeaveBalance,
+  getEmployeeAssets,
+  findAvailableResources,
+} from '../services/enterpriseSystems.js';
 
 export const TOOL_METADATA = {
   searchPolicy: {
@@ -122,35 +128,33 @@ export async function executeTool(toolName, params = {}) {
       try {
         const query = params.query ?? params.message ?? '';
         const docs = await retrieveRelevantDocuments(query);
-
-        // Distinguish between "retrieved documents" and "empty retrieval" —
-        // empty is NOT a success for the policy answer path.
         if (docs.length === 0) {
-          return {
-            success: true,
-            status: 'NO_RESULTS',
-            tool: toolName,
-            data: { documents: [] },
-            error: null,
-          };
+          return { success: true, status: 'NO_RESULTS', tool: toolName, data: { documents: [] }, error: null };
         }
-
-        return {
-          success: true,
-          status: 'SUCCESS',
-          tool: toolName,
-          data: { documents: docs },
-          error: null,
-        };
+        return { success: true, status: 'SUCCESS', tool: toolName, data: { documents: docs }, error: null };
       } catch (err) {
-        return {
-          success: false,
-          status: 'FAILED',
-          tool: toolName,
-          data: null,
-          error: err.message,
-        };
+        return { success: false, status: 'FAILED', tool: toolName, data: null, error: err.message };
       }
+    }
+
+    case 'getEmployee': {
+      const res = getEmployee(params.employeeId ?? params.userId);
+      return { ...res, tool: toolName };
+    }
+
+    case 'checkLeaveBalance': {
+      const res = checkLeaveBalance(params.employeeId ?? params.userId);
+      return { ...res, tool: toolName };
+    }
+
+    case 'getEmployeeAssets': {
+      const res = getEmployeeAssets(params.employeeId ?? params.userId);
+      return { ...res, tool: toolName };
+    }
+
+    case 'findAvailableResources': {
+      const res = findAvailableResources(params.criteria ?? {});
+      return { ...res, tool: toolName };
     }
 
     // All other enterprise operational tools: stubs.

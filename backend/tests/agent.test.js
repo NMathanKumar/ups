@@ -1,5 +1,5 @@
 /**
- * agent.test.js — Agent Foundation + RAG Integration Tests (Steps 9 & 10)
+ * agent.test.js — Agent Foundation + RAG Integration + Enterprise Tools (Steps 9, 10, 11)
  */
 
 import { detectIntent, createPlan, INTENTS } from '../src/agent/planner.js';
@@ -130,9 +130,10 @@ describe('Agent Foundation (Step 9 — regression guard)', () => {
 
   describe('4. Tool Execution — NOT_IMPLEMENTED Safety', () => {
     test('unimplemented tools never return fake success', async () => {
+      // Only WRITE tools remain NOT_IMPLEMENTED after Step 11
+      // (getEmployee, checkLeaveBalance, getEmployeeAssets, findAvailableResources are now implemented)
       const stubs = [
-        'getEmployee', 'checkLeaveBalance', 'createLeaveRequest', 'createHRTask',
-        'getEmployeeAssets', 'createITTicket', 'findAvailableResources',
+        'createLeaveRequest', 'createHRTask', 'createITTicket',
         'allocateResources', 'transferEmployee', 'createOnboarding',
       ];
       for (const name of stubs) {
@@ -253,4 +254,88 @@ describe('Agent RAG Integration (Step 10)', () => {
       await expect(runAgent({ message: 'leave policy?', userId: 'u1' })).rejects.toThrow('generation failed');
     });
   });
+});
+
+// ── Step 11 Tests — Enterprise Tool Delegation ─────────────────────────────
+
+describe('Enterprise Tool Delegation (Step 11)', () => {
+
+  test('getEmployee tool delegates to enterpriseSystems and returns SUCCESS', async () => {
+    const r = await executeTool('getEmployee', { employeeId: 'EMP001' });
+    expect(r.tool).toBe('getEmployee');
+    expect(r.success).toBe(true);
+    expect(r.status).toBe('SUCCESS');
+    expect(r.data.employeeId).toBe('EMP001');
+    expect(r.data.name).toBeDefined();
+  });
+
+  test('getEmployee tool returns NOT_FOUND for unknown employee', async () => {
+    const r = await executeTool('getEmployee', { employeeId: 'EMP_UNKNOWN' });
+    expect(r.tool).toBe('getEmployee');
+    expect(r.success).toBe(false);
+    expect(r.status).toBe('NOT_FOUND');
+  });
+
+  test('checkLeaveBalance tool delegates to enterpriseSystems and returns SUCCESS', async () => {
+    const r = await executeTool('checkLeaveBalance', { employeeId: 'EMP001' });
+    expect(r.tool).toBe('checkLeaveBalance');
+    expect(r.success).toBe(true);
+    expect(r.status).toBe('SUCCESS');
+    expect(typeof r.data.annualLeave).toBe('number');
+    expect(typeof r.data.maternityLeaveEligible).toBe('boolean');
+  });
+
+  test('checkLeaveBalance tool returns NOT_FOUND for unknown employee', async () => {
+    const r = await executeTool('checkLeaveBalance', { employeeId: 'EMP_UNKNOWN' });
+    expect(r.tool).toBe('checkLeaveBalance');
+    expect(r.success).toBe(false);
+    expect(r.status).toBe('NOT_FOUND');
+  });
+
+  test('getEmployeeAssets tool delegates and returns assets array', async () => {
+    const r = await executeTool('getEmployeeAssets', { employeeId: 'EMP001' });
+    expect(r.tool).toBe('getEmployeeAssets');
+    expect(r.success).toBe(true);
+    expect(Array.isArray(r.data.assets)).toBe(true);
+    expect(r.data.assets.length).toBeGreaterThan(0);
+  });
+
+  test('getEmployeeAssets tool returns empty array for employee with no assets', async () => {
+    const r = await executeTool('getEmployeeAssets', { employeeId: 'EMP008' });
+    expect(r.tool).toBe('getEmployeeAssets');
+    expect(r.success).toBe(true);
+    expect(r.data.assets).toHaveLength(0);
+  });
+
+  test('findAvailableResources tool delegates and returns matching resources', async () => {
+    const r = await executeTool('findAvailableResources', {
+      criteria: { department: 'Engineering', location: 'Bangalore' },
+    });
+    expect(r.tool).toBe('findAvailableResources');
+    expect(r.success).toBe(true);
+    expect(r.data.count).toBeGreaterThan(0);
+    r.data.resources.forEach((res) => {
+      expect(res.department).toBe('Engineering');
+      expect(res.location).toBe('Bangalore');
+    });
+  });
+
+  test('findAvailableResources tool returns empty results for no-match criteria', async () => {
+    const r = await executeTool('findAvailableResources', {
+      criteria: { department: 'Nonexistent', location: 'Mars' },
+    });
+    expect(r.tool).toBe('findAvailableResources');
+    expect(r.success).toBe(true);
+    expect(r.data.count).toBe(0);
+  });
+
+  test('WRITE tools remain NOT_IMPLEMENTED after Step 11', async () => {
+    const writeTools = ['createLeaveRequest', 'createHRTask', 'createITTicket', 'allocateResources', 'transferEmployee', 'createOnboarding', 'createTask'];
+    for (const name of writeTools) {
+      const r = await executeTool(name, { userId: 'u1' });
+      expect(r.success).toBe(false);
+      expect(r.status).toBe('NOT_IMPLEMENTED');
+    }
+  });
+
 });

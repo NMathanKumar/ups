@@ -1,0 +1,34 @@
+[
+  {
+    "employeeId": "EMP001",
+    "assets": [
+      { "assetId": "ASSET001", "type": "LAPTOP", "model": "Dell XPS 15", "status": "ASSIGNED", "assignedDate": "2022-03-15" },
+      { "assetId": "ASSET002", "type": "MONITOR", "model": "Dell 27\" 4K", "status": "ASSIGNED", "assignedDate": "2022-03-15" },
+      { "assetId": "ASSET003", "type": "PHONE", "model": "iPhone 14", "status": "ASSIGNED", "assignedDate": "2022-03-15" }
+    ]
+  },
+  {
+    "employeeId": "EMP002",
+    "assets": [
+      { "assetId": "ASSET010", "type": "LAPTOP", "model": "MacBook Pro 14", "status": "ASSIGNED", "assignedDate": "2020-07-01" },
+      { "assetId": "ASSET011", "type": "MONITOR", "model": "LG 32\" 4K", "status": "ASSIGNED", "assignedDate": "2020-07-01" }
+    ]
+  },
+  {
+    "employeeId": "EMP004",
+    "assets": [
+      { "assetId": "ASSET020", "type": "LAPTOP", "model": "ThinkPad X1 Carbon", "status": "ASSIGNED", "assignedDate": "2023-05-20" },
+      { "assetId": "ASSET021", "type": "HEADSET", "model": "Jabra Evolve2", "status": "ASSIGNED", "assignedDate": "2023-05-20" }
+    ]
+  },
+  {
+    "employeeId": "EMP008",
+    "assets": []
+  },
+  {
+    "employeeId": "demo-user",
+    "assets": [
+      { "assetId": "ASSET050", "type": "LAPTOP", "model": "Dell Latitude 5540", "status": "ASSIGNED", "assignedDate": "2023-08-01" }
+    ]
+  }
+]
