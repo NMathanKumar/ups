@@ -1,0 +1,16 @@
+# Local .terraform directory
+.terraform/
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Exclude sensitive variables file
+*.tfvars
+
+# Generated zip files
+placeholder_lambda.zip
