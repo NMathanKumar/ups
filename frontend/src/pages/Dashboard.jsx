@@ -358,6 +358,7 @@ export default function Dashboard({ onNavigate, currentUser }) {
 
         <div className="hero-quick-actions" role="list" aria-label="Quick actions" style={{ marginTop: 18 }}>
           {[
+            { label: 'Accident Leave Ticket', query: 'I met with an accident, I want to apply for accident leave' },
             { label: 'Apply Leave', query: 'How do I submit a leave request for maternity?' },
             { label: 'Learning Programs', query: 'What security training programs are mandatory?' },
             { label: 'IT Support Ticket', query: 'How do I request a new laptop or hardware?' },

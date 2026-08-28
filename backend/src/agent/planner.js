@@ -10,6 +10,7 @@ import { getToolMetadata } from './tools.js';
 export const INTENTS = {
   POLICY_QUESTION:         'POLICY_QUESTION',
   MATERNITY_LEAVE:         'MATERNITY_LEAVE',
+  ACCIDENT_LEAVE:          'ACCIDENT_LEAVE',
   LEAVE_BALANCE:           'LEAVE_BALANCE',
   RESOURCE_ALLOCATION:     'RESOURCE_ALLOCATION',
   EMPLOYEE_TRANSFER:       'EMPLOYEE_TRANSFER',
@@ -32,6 +33,10 @@ export const INTENTS = {
 export function detectIntent(message) {
   if (!message || typeof message !== 'string') return INTENTS.GENERAL;
   const text = message.toLowerCase().trim();
+
+  if (/\b(accident|injury|injured|casualty|emergency leave|hospitalization|medical emergency)\b/i.test(text)) {
+    return INTENTS.ACCIDENT_LEAVE;
+  }
 
   if (/\b(maternity|pregnancy|pregnant|parental leave|paternity|birth leave)\b/.test(text)) {
     return INTENTS.MATERNITY_LEAVE;
@@ -109,6 +114,7 @@ export function createPlan(intent, message) {
 
   switch (selectedIntent) {
     case INTENTS.MATERNITY_LEAVE:
+    case INTENTS.ACCIDENT_LEAVE:
       requiresPolicy = true;
       requiresEmployeeData = true;
       toolNames = ['searchPolicy', 'getEmployee', 'checkLeaveBalance', 'createLeaveRequest', 'createHRTask', 'getEmployeeAssets', 'createITTicket'];

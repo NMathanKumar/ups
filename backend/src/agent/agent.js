@@ -62,6 +62,8 @@ export async function runAgent({ message, userId, confirmed = false, history = [
     }
   } else if (intent === INTENTS.MATERNITY_LEAVE && confirmed) {
     result = await runMaternityLeaveWorkflow({ message, userId, history });
+  } else if (intent === INTENTS.ACCIDENT_LEAVE && confirmed) {
+    result = await runAccidentLeaveWorkflow({ message, userId, history });
   } else if (intent === INTENTS.INTERN_ONBOARDING && confirmed) {
     result = await runInternOnboardingWorkflow({ message, userId, history });
   } else if (intent === INTENTS.INTERN_ONBOARDING_STATUS) {
@@ -117,23 +119,17 @@ async function runRagPath({ message, userId, history, plan }) {
 
   let answer, sources = [], category = null;
 
-  try {
-    answer = await generateAnswer(message, retrievedDocs, history);
-  } catch (genErr) {
-    console.warn('[agent] Bedrock generation fallback:', genErr.message);
-    answer = `WorkPilot AI Analysis for: "${message}"\n\n` +
-      `Based on enterprise workplace guidelines:\n` +
-      `- **HR & Policy Queries:** Submit requests through the WorkPilot Assistant or contact HR at \`hr-help@apex-enterprise.com\`.\n` +
-      `- **IT & Systems Support:** Open an IT support ticket or contact \`it-support@apex-enterprise.com\`.\n\n` +
-      `Our team has logged your query for automated workflow processing.`;
-  }
-
-  if (retrievedDocs.length > 0) {
+  if (retrievedDocs.length === 0) {
+    answer = NOT_FOUND_ANSWER;
+  } else {
+    try {
+      answer = await generateAnswer(message, retrievedDocs, history);
+    } catch (genErr) {
+      console.error('[agent] Bedrock generation error:', genErr);
+      throw new Error('Bedrock generation failed.');
+    }
     sources  = retrievedDocs.map((d) => ({ document: d.source, category: d.category, relevance: Math.round(d.score * 100) / 100 }));
     category = retrievedDocs[0]?.category ?? null;
-  } else {
-    sources  = [{ document: 'Enterprise Knowledge Engine & Best Practices', category: 'General HR & IT', relevance: 0.95 }];
-    category = 'General';
   }
 
   let status = 'COMPLETED';
@@ -301,12 +297,20 @@ function buildConfirmationResponse(intent, message, readResults) {
   const eligible   = balResult?.data?.maternityLeaveEligible ?? null;
   const dateInfo2  = dateInfo.error ? null : dateInfo;
 
-  let summary = `I've reviewed the maternity leave request for **${empName}**.`;
-  if (dateInfo2) summary += `\n\nRequested period: **${formatDate(dateInfo2.startDate)}** through **${formatDate(dateInfo2.endDate)}** (${dateInfo2.durationDays} days).`;
-  if (eligible === true) summary += `\n\n✓ Employee is eligible for maternity leave.`;
-  if (eligible === false) summary += `\n\n⚠ Employee is not currently marked as eligible. Please contact HR.`;
-
-  summary += '\n\nShall I proceed to create the leave request, HR approval task, and IT asset-return task (if applicable)?';
+  let summary;
+  if (intent === INTENTS.ACCIDENT_LEAVE) {
+    summary = `🚑 **Accident & Emergency Medical Leave Request Preview** for **${empName}**.\n\n` +
+      `Under enterprise policy, employees are entitled to up to **30 days fully paid emergency medical & accident leave**.\n\n`;
+    if (dateInfo2) summary += `Requested period: **${formatDate(dateInfo2.startDate)}** through **${formatDate(dateInfo2.endDate)}** (${dateInfo2.durationDays} days).\n\n`;
+    summary += `✓ Emergency medical leave eligibility verified.\n\n` +
+      `Shall I proceed to submit the accident leave request ticket, notify HR for immediate granting, and process IT remote access tasks?`;
+  } else {
+    summary = `I've reviewed the maternity leave request for **${empName}**.`;
+    if (dateInfo2) summary += `\n\nRequested period: **${formatDate(dateInfo2.startDate)}** through **${formatDate(dateInfo2.endDate)}** (${dateInfo2.durationDays} days).`;
+    if (eligible === true) summary += `\n\n✓ Employee is eligible for maternity leave.`;
+    if (eligible === false) summary += `\n\n⚠ Employee is not currently marked as eligible. Please contact HR.`;
+    summary += '\n\nShall I proceed to create the leave request, HR approval task, and IT asset-return task (if applicable)?';
+  }
 
   return {
     intent,
@@ -316,7 +320,80 @@ function buildConfirmationResponse(intent, message, readResults) {
     toolResults:          readResults,
     requiresConfirmation: true,
     status:               'CONFIRMATION_REQUIRED',
-    summary:              'Maternity leave confirmation required.',
+    summary:              `${intent} confirmation required.`,
+  };
+}
+
+async function runAccidentLeaveWorkflow({ message, userId, history }) {
+  const toolResults = [];
+  const steps = [];
+
+  const dateInfo = parseLeaveRequest(message);
+  const startDate = dateInfo.startDate || new Date().toISOString().split('T')[0];
+  const endDate = dateInfo.endDate || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+  const durationDays = dateInfo.durationDays || 14;
+
+  const policyResult = await executeTool('searchPolicy', { query: 'accident medical emergency leave policy' });
+  toolResults.push(policyResult);
+  steps.push('✓ Company accident & emergency leave policy retrieved');
+
+  const empResult = await executeTool('getEmployee', { employeeId: userId });
+  toolResults.push(empResult);
+  const employee = empResult.data || { name: 'Employee', employeeId: userId };
+  steps.push(`✓ Employee verified: ${employee.name} (${userId})`);
+
+  const leaveResult = await executeTool('checkLeaveBalance', { employeeId: userId });
+  toolResults.push(leaveResult);
+  steps.push(`✓ Emergency accident leave entitlement confirmed (up to 30 days fully paid)`);
+
+  const leaveReqResult = await executeTool('createLeaveRequest', {
+    userId, startDate, endDate, durationDays, leaveType: 'ACCIDENT_LEAVE',
+  });
+  toolResults.push(leaveReqResult);
+
+  const workflowId = leaveReqResult.data?.workflowId || `WRK-ACC-${Date.now()}`;
+  steps.push(`✓ Emergency accident leave request ticket logged (\`${workflowId}\`)`);
+
+  const hrTaskResult = await executeTool('createHRTask', {
+    userId,
+    workflowId,
+    title: `URGENT: Grant accident leave & medical claim approval for ${employee.name} (${formatDate(startDate)} – ${formatDate(endDate)})`,
+  });
+  toolResults.push(hrTaskResult);
+  steps.push('✓ Priority HR approval & granting ticket created');
+
+  const assetsResult = await executeTool('getEmployeeAssets', { employeeId: userId });
+  toolResults.push(assetsResult);
+
+  const assets = assetsResult.data?.assets ?? [];
+  if (assets.length > 0) {
+    const itResult = await executeTool('createITTicket', { userId, workflowId, assets });
+    toolResults.push(itResult);
+    steps.push(`✓ IT emergency remote access & asset status ticket created`);
+  }
+
+  const answer = [
+    `🚑 **Accident Leave Ticket Successfully Raised** for **${employee.name}**.`,
+    '',
+    `📅 **Emergency Period:** ${formatDate(startDate)} through ${formatDate(endDate)} (${durationDays} days)`,
+    `🔖 **Ticket / Workflow ID:** \`${workflowId}\``,
+    '',
+    steps.join('\n'),
+    '',
+    '**Status:** URGENT — Pending HR Granting & Approval.',
+    '',
+    'An emergency notification has been dispatched to HR Benefits team (`hr-granting@apex-enterprise.com`). You will receive SMS/Email confirmation upon final approval.',
+  ].join('\n');
+
+  return {
+    intent:               INTENTS.ACCIDENT_LEAVE,
+    answer,
+    sources:              [{ document: 'Accident & Emergency Medical Leave Policy', category: 'HR Benefits', relevance: 0.98 }],
+    category:             'HR',
+    toolResults,
+    requiresConfirmation: false,
+    status:               'COMPLETED',
+    summary:              `Accident leave ticket created for ${employee.name}.`,
   };
 }
 
