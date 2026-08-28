@@ -1,34 +1,28 @@
 /**
  * chat.js — POST /api/chat
  *
- * RAG flow:
- * 1. Validate request
- * 2. Load recent conversation history
- * 3. Retrieve relevant KB chunks
- * 4. If no relevant chunks → return "not found" response (no hallucination)
- * 5. Invoke Bedrock model with grounded context
- * 6. Persist user + assistant messages
- * 7. Return structured response
+ * Step 10: Delegates to the Agent Orchestrator.
+ *
+ * Flow:
+ *   validate request
+ *     → load conversation history
+ *     → runAgent (intent → searchPolicy → KB → generateAnswer)
+ *     → persist history
+ *     → return { answer, sources, category }
+ *
+ * The API response shape is unchanged from Step 8 so the frontend requires no update.
  */
 
 import { ok, badRequest, serverError } from '../utils/response.js';
 import { validateMessage, validateUserId, parseBody } from '../utils/validation.js';
-import { retrieveRelevantDocuments } from '../services/knowledgeBase.js';
-import { generateAnswer } from '../services/bedrock.js';
 import { saveMessage, getRecentMessages } from '../services/conversationService.js';
-
-const NOT_FOUND_ANSWER =
-  "I couldn't find this information in the available enterprise documents. " +
-  "Please contact HR at hr-help@apex-enterprise.com or IT Support at it-support@apex-enterprise.com for assistance.";
+import { runAgent } from '../agent/agent.js';
 
 export async function handleChat(event) {
-  // Parse body
+  // ── Parse & validate ─────────────────────────────────────────────────────
   const body = parseBody(event);
-  if (body === null) {
-    return badRequest('Invalid JSON in request body.');
-  }
+  if (body === null) return badRequest('Invalid JSON in request body.');
 
-  // Validate inputs
   const messageError = validateMessage(body.message);
   if (messageError) return badRequest(messageError);
 
@@ -39,58 +33,37 @@ export async function handleChat(event) {
   const userId  = body.userId.trim();
 
   try {
-    // Step 1: Load recent conversation context
+    // ── Load recent conversation history ──────────────────────────────────
     const history = await getRecentMessages(userId);
 
-    // Step 2: Retrieve relevant enterprise document chunks
-    let chunks = [];
+    // ── Run agent (intent → tools → Bedrock KB → generation) ─────────────
+    let agentResult;
     try {
-      chunks = await retrieveRelevantDocuments(message);
-    } catch (kbErr) {
-      console.error('[chat] KnowledgeBase retrieval error:', kbErr);
-      return serverError('Unable to process the AI request. Knowledge Base retrieval failed.');
+      agentResult = await runAgent({ message, userId, history });
+    } catch (agentErr) {
+      console.error('[chat] Agent error:', agentErr.message);
+      const msg = agentErr.message?.includes('generation')
+        ? 'Unable to process the AI request. Model invocation failed.'
+        : 'Unable to process the AI request. Knowledge Base retrieval failed.';
+      return serverError(msg);
     }
 
-    // Step 3: No relevant enterprise content — refuse to hallucinate
-    if (chunks.length === 0) {
-      // Still save the exchange so history reflects this
-      await Promise.all([
-        saveMessage(userId, 'user', message),
-        saveMessage(userId, 'assistant', NOT_FOUND_ANSWER),
-      ]);
-      return ok({
-        answer: NOT_FOUND_ANSWER,
-        sources: [],
-        category: null,
-      });
+    // Tool-layer failures (KB error caught by searchPolicy) surface as FAILED status
+    if (agentResult.status === 'FAILED') {
+      console.error('[chat] Agent tool failure:', agentResult.toolResults);
+      return serverError('Unable to retrieve enterprise information.');
     }
 
-    // Step 4: Generate grounded answer
-    let answer;
-    try {
-      answer = await generateAnswer(message, chunks, history);
-    } catch (bedrockErr) {
-      console.error('[chat] Bedrock model invocation error:', bedrockErr);
-      return serverError('Unable to process the AI request. Model invocation failed.');
-    }
+    const { answer, sources, category } = agentResult;
 
-    // Step 5: Save conversation history (fire-and-forget — do not block response)
+    // ── Persist history (fire-and-forget — do not block response) ─────────
     Promise.all([
       saveMessage(userId, 'user', message),
       saveMessage(userId, 'assistant', answer),
     ]).catch((err) => console.error('[chat] Failed to save conversation history:', err));
 
-    // Step 6: Build sources list
-    const sources = chunks.map((c) => ({
-      document: c.source,
-      category: c.category,
-      relevance: Math.round(c.score * 100) / 100,
-    }));
-
-    // Determine primary category from highest-scoring chunk
-    const primaryCategory = chunks[0]?.category ?? null;
-
-    return ok({ answer, sources, category: primaryCategory });
+    // ── Return frontend-compatible response ───────────────────────────────
+    return ok({ answer, sources, category });
 
   } catch (err) {
     console.error('[chat] Unexpected error:', err);

@@ -5,7 +5,7 @@
  * and predictable execution result contracts:
  * {
  *   success: boolean,
- *   status: "SUCCESS" | "NOT_IMPLEMENTED" | "FAILED",
+ *   status: "SUCCESS" | "NO_RESULTS" | "NOT_IMPLEMENTED" | "FAILED",
  *   tool: string,
  *   data: any,
  *   error: string | null
@@ -117,12 +117,24 @@ export async function executeTool(toolName, params = {}) {
     };
   }
 
-  // Handle implemented tools vs un-implemented placeholders
   switch (toolName) {
-    case 'searchPolicy':
+    case 'searchPolicy': {
       try {
         const query = params.query ?? params.message ?? '';
         const docs = await retrieveRelevantDocuments(query);
+
+        // Distinguish between "retrieved documents" and "empty retrieval" —
+        // empty is NOT a success for the policy answer path.
+        if (docs.length === 0) {
+          return {
+            success: true,
+            status: 'NO_RESULTS',
+            tool: toolName,
+            data: { documents: [] },
+            error: null,
+          };
+        }
+
         return {
           success: true,
           status: 'SUCCESS',
@@ -139,9 +151,10 @@ export async function executeTool(toolName, params = {}) {
           error: err.message,
         };
       }
+    }
 
-    // All other enterprise operational tools are stubs for Step 9
-    // IMPORTANT: Explicitly return NOT_IMPLEMENTED, never fake success.
+    // All other enterprise operational tools: stubs.
+    // IMPORTANT: Never return fake success.
     default:
       return {
         success: false,
