@@ -41,7 +41,11 @@ export function detectIntent(message) {
     return INTENTS.LEAVE_BALANCE;
   }
 
-  if (/\b(equipment|assets|hardware|laptop assigned|devices|what equipment|what assets)\b/i.test(text)) {
+  if (/\b(vpn|password|wifi|network|it support|reset password|software access|laptop support|connecting to vpn)\b/i.test(text)) {
+    return INTENTS.IT_SUPPORT;
+  }
+
+  if (/\b(equipment|assigned assets|hardware list|my devices|what equipment|what assets)\b/i.test(text)) {
     return INTENTS.EMPLOYEE_ASSETS;
   }
 
@@ -152,7 +156,7 @@ export function createPlan(intent, message) {
 
     case INTENTS.IT_SUPPORT:
       requiresPolicy = true;
-      toolNames = ['searchPolicy', 'getEmployeeAssets', 'createITTicket'];
+      toolNames = ['searchPolicy'];
       break;
 
     case INTENTS.TASK_CREATION:
