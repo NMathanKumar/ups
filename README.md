@@ -5,9 +5,9 @@
 [![Node.js](https://img.shields.io/badge/Backend-Node.js%20%7C%20AWS%20Lambda-339933?style=flat-square&logo=node.js)](https://nodejs.org)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-dzm9oii5lyk4d.cloudfront.net-FF9900?style=flat-square)](https://dzm9oii5lyk4d.cloudfront.net)
 
-**WorkPilot AI** is an advanced, enterprise-grade AI Digital Assistant that provides employees with a unified, conversational workspace interface across HR, IT Support, Onboarding, Learning, and Workplace Services.
+**WorkPilot AI** is an advanced, enterprise-grade AI Digital Assistant that provides employees with a unified, conversational workspace interface across HR, IT Support, Resource Mobility, Onboarding, Learning, and Workplace Services.
 
-Grounded in **Amazon Bedrock RAG (Retrieval-Augmented Generation)**, **OpenSearch Serverless Vector Engine**, **AWS Cognito**, and **Amazon DynamoDB**, WorkPilot AI goes beyond traditional Q&A by executing end-to-end multi-step enterprise workflows directly from natural language requests.
+Grounded in **Amazon Bedrock RAG (Retrieval-Augmented Generation)**, **OpenSearch Serverless Vector Engine**, **AWS Cognito**, and **Amazon DynamoDB**, WorkPilot AI goes beyond traditional Q&A by executing end-to-end multi-step enterprise workflows directly from natural language requests and dedicated workspace portals.
 
 ---
 
@@ -20,38 +20,42 @@ Grounded in **Amazon Bedrock RAG (Retrieval-Augmented Generation)**, **OpenSearc
 - **S3 Hosting Bucket**: `employee-ai-assistant-frontend-8a30f804`
 - **CloudFront Distribution**: `E2VZJ189FEZ821`
 - **GitHub Repository**: [https://github.com/NMathanKumar/ups.git](https://github.com/NMathanKumar/ups.git)
+- **Git Branches**: `main`, `master`
 
 ---
 
 ## 🔥 Key System Capabilities
 
-### 1. Amazon Bedrock RAG & Universal LLM Fallback
+### 1. Amazon Bedrock RAG & ChatGPT/Claude Conversational Persona
 - **Vector Search RAG**: Grounded in OpenSearch Serverless vector embeddings for accurate company policy retrieval.
-- **Universal LLM Fallback (100% Answer Guarantee)**: If vector RAG search returns 0 document matches, the system seamlessly falls back to **Amazon Nova Micro (`amazon.nova-micro-v1:0`) LLM synthesis** to provide a complete, intelligent response based on standard enterprise best practices.
+- **Universal LLM Fallback (100% Answer Guarantee)**: If vector RAG search returns 0 document matches, the system seamlessly falls back to **Amazon Nova Micro (`amazon.nova-micro-v1:0`) LLM synthesis**.
+- **Direct First-Sentence Answers**: Answers specific user questions immediately in line 1 without robotic intros (*"Based on the context..."*), supporting natural multi-turn conversation history.
 
-### 2. Policy-to-Action Multi-Step Workflows
-- **Maternity Leave Workflow**:
-  - Validates employee eligibility via `checkLeaveBalance`.
-  - Presents policy details and renders an interactive **"Confirm & Execute Workflow"** action card.
-  - Automatically provisions the leave request in **DynamoDB**, issues an **HR Approval Task**, and creates an **IT Asset-Return Ticket** if company hardware is assigned.
+### 2. Integrated Resource Mobility & Employee Transfer Workspace
+- **Dedicated Sidebar Menu**: Access via **"Resource Mobility"** (`#transfers`).
+- **Cognito & Enterprise Employee Selector Dropdown**: Select active employees (*Priya Sharma, Meera Nair, Alex Rivera, Sarah Jenkins, John Doe, Michael Chang, Emma Watson + logged-in Cognito account*).
+- **Live Employee Inspector Card**: Displays Employee ID, Title, Current Department, Email, and assigned IT Devices.
+- **Target Department Transfer Workflow**: Transfer employees across departments (*Engineering & AI*, *Product UX*, *IT Infrastructure*, *HR*, *Operations*, *Finance*).
+- **Automated Workflow Ticket Generation**: Persists transfer records in **DynamoDB**, creates an **HR Department Transfer Task**, and provisions an **IT SSO & Permission Re-configuration Ticket**.
+- **Resource Allocation Radar**: Displays unassigned staff matching project skill requests.
+
+### 3. Policy-to-Action Multi-Step Workflows
 - **Accident & Emergency Medical Leave Workflow (Male & All Employees)**:
   - Detects accident, injury, or emergency medical requests.
   - Entitles up to 30 days fully paid emergency medical leave.
   - Generates an URGENT HR Approval & Granting Ticket and IT Emergency Remote Access task upon user confirmation.
+- **Maternity Leave Workflow**:
+  - Validates eligibility via `checkLeaveBalance`.
+  - Creates DynamoDB leave record, HR Approval Task, and IT Asset-Return Ticket.
 - **Intern Onboarding Workflow**:
-  - Automatically provisions intern onboarding plans, HR tax setup tasks, IT SSO/Duo MFA provisioning, and mandatory security training modules.
+  - Provisions intern onboarding plans, HR tax setup tasks, IT SSO/Duo MFA provisioning, and mandatory security training modules.
 
-### 3. Dashboard Search Transfer & Auto-Submit
-- Prompts entered into the Dashboard Hero Search or selected via Quick Action Chips (*Apply Leave*, *Accident Leave Ticket*, *IT Support Ticket*, *Learning Programs*) are stored in `sessionStorage`.
-- Navigating to the **AI Assistant** tab automatically retrieves the pending prompt, pastes it into the chat input, and executes it immediately.
+### 4. Dashboard Search Transfer & Auto-Submit
+- Prompts entered into the Dashboard Hero Search or selected via Quick Action Chips (*Apply Leave*, *Accident Leave Ticket*, *IT Support Ticket*, *Learning Programs*) auto-execute upon navigating to the **AI Assistant** tab.
 
-### 4. AWS Cognito Authentication & Security
-- Secure, professional User Registration & Sign In with form validation (Name, Email, Phone, Gender, Designation, Password matching).
-- Integrates directly with AWS Cognito User Pool via AWS SDK.
-
-### 5. Amazon Enterprise Royal Look & Visual Theme System
-- Designed with Amazon Enterprise colors: **Amazon Squall Navy (`#232f3e`)**, **Midnight Ink (`#131921`)**, and **Warm Amber Gold (`#ff9900` / `#ec7211`)**.
-- Fully responsive layout featuring real-time system audit feeds, interactive task filters, modal dialogs, and toast notifications.
+### 5. AWS Cognito Authentication & Security
+- Secure User Registration & Sign In with form validation (Name, Email, Phone, Gender, Designation, Password matching).
+- Direct AWS SDK integration with AWS Cognito User Pool `us-east-1_1de2ju7LG`.
 
 ---
 
@@ -93,22 +97,17 @@ employee-ai-assistant/
 │   │   ├── agent/                  # Agent Orchestrator & Planner Engine
 │   │   │   ├── agent.js            # Main RAG & Workflow Orchestrator
 │   │   │   ├── planner.js          # Intent Classification & Plan Generator
-│   │   │   └── tools.js            # Tool Execution Layer (DynamoDB & RAG)
+│   │   │   └── tools.js            # Tool Execution Layer (DynamoDB & RAG stubs)
 │   │   ├── config/                 # Environment Configuration
 │   │   │   └── environment.js      # AWS Credentials & Resource Identifiers
 │   │   ├── handlers/               # API Gateway Event Handlers
+│   │   │   ├── auth.js             # AWS Cognito Sign Up / Login Handlers
 │   │   │   ├── chat.js             # POST /api/chat Endpoint
-│   │   │   ├── hr.js               # HR Endpoints
-│   │   │   ├── it.js               # IT Support Endpoints
-│   │   │   ├── onboarding.js       # Onboarding Endpoints
+│   │   │   ├── conversations.js    # Chat History Handlers
+│   │   │   ├── health.js           # API Health Checker
 │   │   │   ├── reminders.js        # Reminders Endpoints
 │   │   │   └── tasks.js            # Tasks Endpoints
 │   │   ├── microservices/          # AWS Lambda Entry Points
-│   │   │   ├── agent-service/
-│   │   │   ├── hr-service/
-│   │   │   ├── it-service/
-│   │   │   ├── onboarding-service/
-│   │   │   └── task-service/
 │   │   └── services/               # AWS SDK Integrations
 │   │       ├── bedrock.js          # Amazon Bedrock Converse API Client
 │   │       ├── cognito.js          # AWS Cognito Authentication Service
@@ -132,21 +131,20 @@ employee-ai-assistant/
 │   │   ├── components/             # Reusable UI Components
 │   │   │   ├── ActionCard.jsx      # Policy-to-Action Interactive Cards
 │   │   │   ├── ChatMessage.jsx     # AI Chat Message Bubbles & Avatars
+│   │   │   ├── Header.jsx          # Top Workspace Bar
 │   │   │   ├── Icon.jsx            # SVG Icon System
 │   │   │   ├── Sidebar.jsx         # Amazon Royal Navigation Bar
-│   │   │   ├── SourceCard.jsx      # Grounded Document Source Citations
-│   │   │   ├── StatCard.jsx        # Metric Cards & Dashboard Indicators
-│   │   │   ├── TaskCard.jsx        # Interactive Task Checklist Items
 │   │   │   └── Toast.jsx           # Notification Toast Stack
 │   │   ├── pages/                  # Top-Level Page Workspaces
 │   │   │   ├── Assistant.jsx       # AI Assistant Conversational Chat Workspace
+│   │   │   ├── Auth.jsx            # AWS Cognito Login & Sign Up Page
 │   │   │   ├── Dashboard.jsx       # Overview Dashboard & Hero AI Search
 │   │   │   ├── ITSupport.jsx       # IT Hardware & VPN Access Portal
 │   │   │   ├── Learning.jsx        # Mandatory Compliance & Skill Center
-│   │   │   ├── Login.jsx           # AWS Cognito Centered Auth Page
-│   │   │   ├── Onboarding.jsx      # New Hire Journey & Tasks
+│   │   │   ├── Policies.jsx        # Policy Explorer Workspace
 │   │   │   ├── Settings.jsx        # Dynamic Logged-In User Profile
-│   │   │   └── Tasks.jsx           # Unified Priority Task Workspace
+│   │   │   ├── Tasks.jsx           # Unified Priority Task Workspace
+│   │   │   └── Transfers.jsx       # Resource & Employee Mobility Workspace
 │   │   ├── services/
 │   │   │   ├── api.js              # REST API Client Integration
 │   │   │   └── cognitoAuth.js      # AWS Cognito SDK Wrapper
@@ -232,6 +230,8 @@ aws cloudfront create-invalidation --distribution-id E2VZJ189FEZ821 --paths "/*"
 | HTTP Method | Path | Description |
 |---|---|---|
 | `POST` | `/api/chat` | Main Agent entry point. Processes employee prompt, executes RAG/tools, and returns answer & workflow confirmation flags. |
+| `POST` | `/api/auth/signup` | Registers account in AWS Cognito User Pool & DynamoDB. |
+| `POST` | `/api/auth/login` | Authenticates via AWS Cognito & returns user session profile. |
 | `GET` | `/api/tasks` | Retrieves employee task items from DynamoDB. |
 | `POST` | `/api/tasks` | Toggles or creates task completion status. |
 | `GET` | `/api/reminders` | Fetches proactive reminders for the logged-in employee. |
