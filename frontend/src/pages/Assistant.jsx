@@ -53,7 +53,8 @@ export default function Assistant({ currentUser }) {
     setIsTyping(true)
 
     try {
-      const result = await queryAssistant(queryText, empId, confirmed)
+      const recentHistory = messages.slice(-6).map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }))
+      const result = await queryAssistant(queryText, empId, confirmed, recentHistory)
       const aiMsg = {
         id: Date.now() + 1,
         role: 'ai',

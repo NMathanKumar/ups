@@ -13,7 +13,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
  * @param {boolean} confirmed
  * @returns {Promise<{ answer: string, sources: Array, category: string|null, status?: string, requiresConfirmation?: boolean }>}
  */
-export async function queryAssistant(message, userId = 'EMP001', confirmed = false) {
+export async function queryAssistant(message, userId = 'EMP001', confirmed = false, history = []) {
   if (!API_BASE_URL) {
     throw new Error(
       'VITE_API_BASE_URL is not configured. ' +
@@ -24,7 +24,7 @@ export async function queryAssistant(message, userId = 'EMP001', confirmed = fal
   const response = await fetch(`${API_BASE_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, userId, confirmed }),
+    body: JSON.stringify({ message, userId, confirmed, history }),
   });
 
   if (!response.ok) {

@@ -35,7 +35,9 @@ export async function handleChat(event) {
 
   try {
     // ── Load recent conversation history ──────────────────────────────────
-    const history = await getRecentMessages(userId);
+    const incomingHistory = Array.isArray(body.history) ? body.history : [];
+    const storedHistory = await getRecentMessages(userId);
+    const history = incomingHistory.length > 0 ? incomingHistory : storedHistory;
 
     // ── Run agent (intent → tools → Bedrock KB → generation) ─────────────
     let agentResult;
