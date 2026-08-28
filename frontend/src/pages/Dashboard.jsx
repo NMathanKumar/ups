@@ -178,6 +178,7 @@ export default function Dashboard({ onNavigate, currentUser }) {
   const handleHeroSubmit = (e) => {
     e.preventDefault()
     if (heroQuery.trim()) {
+      sessionStorage.setItem('workpilot_pending_prompt', heroQuery.trim())
       onNavigate('assistant')
     }
   }
@@ -357,7 +358,7 @@ export default function Dashboard({ onNavigate, currentUser }) {
 
         <div className="hero-quick-actions" role="list" aria-label="Quick actions" style={{ marginTop: 18 }}>
           {[
-            { label: 'Apply Leave', query: 'How do I submit a leave request?' },
+            { label: 'Apply Leave', query: 'How do I submit a leave request for maternity?' },
             { label: 'Learning Programs', query: 'What security training programs are mandatory?' },
             { label: 'IT Support Ticket', query: 'How do I request a new laptop or hardware?' },
             { label: 'Work From Home Policy', query: 'What is the remote work policy?' },
@@ -366,7 +367,7 @@ export default function Dashboard({ onNavigate, currentUser }) {
               key={a.label}
               className="hero-quick-btn"
               onClick={() => {
-                setHeroQuery(a.query)
+                sessionStorage.setItem('workpilot_pending_prompt', a.query)
                 onNavigate('assistant')
               }}
               style={{ background: 'rgba(255, 255, 255, 0.12)', border: '1px solid rgba(255, 255, 255, 0.25)', color: '#ffffff' }}

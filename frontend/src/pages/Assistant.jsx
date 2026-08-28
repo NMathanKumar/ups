@@ -33,6 +33,15 @@ export default function Assistant({ currentUser }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
+  // Check for pending search query from Dashboard or other pages
+  useEffect(() => {
+    const pendingPrompt = sessionStorage.getItem('workpilot_pending_prompt')
+    if (pendingPrompt) {
+      sessionStorage.removeItem('workpilot_pending_prompt')
+      sendMessage(pendingPrompt)
+    }
+  }, [sendMessage])
+
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now()
     setToasts(prev => [...prev, { id, message, type }])
