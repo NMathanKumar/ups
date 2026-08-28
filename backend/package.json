@@ -1,0 +1,28 @@
+{
+  "name": "workpilot-backend",
+  "version": "1.0.0",
+  "description": "WorkPilot AI - Enterprise Employee Assistant Backend",
+  "type": "module",
+  "main": "src/router.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
+    "dev": "node src/router.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.600.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.600.0",
+    "@aws-sdk/client-dynamodb": "^3.600.0",
+    "@aws-sdk/client-textract": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.600.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "transform": {},
+    "setupFiles": ["./jest.setup.js"]
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

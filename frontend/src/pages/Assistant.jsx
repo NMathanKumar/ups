@@ -4,34 +4,27 @@ import SourceCard from '../components/SourceCard'
 import ActionCard from '../components/ActionCard'
 import Toast from '../components/Toast'
 import Icon from '../components/Icon'
-import { mockConversations } from '../services/mockData'
+import { queryAssistant } from '../services/api'
 
 const EXAMPLE_PROMPTS = [
-  { key: 'wfh',       text: 'What is the work from home policy?',       icon: 'file' },
-  { key: 'leave',     text: 'How many leave days do I have?',           icon: 'calendar' },
-  { key: 'training',  text: 'What training do I need to complete?',     icon: 'book' },
-  { key: 'vpn',       text: "My VPN isn't working.",                    icon: 'wifi' },
+  { key: 'wfh',      text: 'What is the work from home policy?',   icon: 'file' },
+  { key: 'leave',    text: 'How many leave days do I have?',       icon: 'calendar' },
+  { key: 'training', text: 'What training do I need to complete?', icon: 'book' },
+  { key: 'vpn',      text: "My VPN isn't working.",                icon: 'wifi' },
 ]
+
+const USER_ID = 'demo-user' // Configurable in a real auth implementation
 
 function getTime() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-function getMockKey(text) {
-  const t = text.toLowerCase()
-  if (t.includes('wfh') || t.includes('work from home')) return 'wfh'
-  if (t.includes('leave') || t.includes('days')) return 'leave'
-  if (t.includes('training') || t.includes('course')) return 'training'
-  if (t.includes('vpn') || t.includes('wifi') || t.includes('network')) return 'vpn'
-  return null
-}
-
 export default function Assistant() {
   const [messages, setMessages] = useState([])
-  const [extras, setExtras] = useState([]) // { id, source, action }
-  const [input, setInput] = useState('')
+  const [extras, setExtras]     = useState([])
+  const [input, setInput]       = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [toasts, setToasts] = useState([])
+  const [toasts, setToasts]     = useState([])
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -47,30 +40,48 @@ export default function Assistant() {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  const sendMessage = useCallback((text) => {
+  const sendMessage = useCallback(async (text) => {
     if (!text.trim()) return
     const userMsg = { id: Date.now(), role: 'user', content: text, time: getTime() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setIsTyping(true)
 
-    setTimeout(() => {
-      setIsTyping(false)
-      const key = getMockKey(text)
-      const conv = key ? mockConversations[key] : null
+    try {
+      const result = await queryAssistant(text, USER_ID)
       const aiMsg = {
         id: Date.now() + 1,
         role: 'ai',
-        content: conv
-          ? conv.aiMessage
-          : "I understand you're asking about that. For the MVP demo, I can answer questions about WFH policy, leave balance, training requirements, and VPN issues. Please try one of the example prompts!",
+        content: result.answer,
         time: getTime(),
       }
       setMessages(prev => [...prev, aiMsg])
-      if (conv) {
-        setExtras(prev => [...prev, { id: aiMsg.id, source: conv.source, action: conv.action }])
+
+      // Build source + action extras for the SourceCard / ActionCard components
+      if (result.sources && result.sources.length > 0) {
+        const primarySource = result.sources[0]
+        setExtras(prev => [...prev, {
+          id: aiMsg.id,
+          source: {
+            fileName: primarySource.document,
+            system:   primarySource.category ?? result.category ?? 'Enterprise KB',
+          },
+          action: null, // Action cards are surfaced when the AI response suggests an action
+        }])
       }
-    }, 1400)
+    } catch (err) {
+      const errMsg = {
+        id: Date.now() + 1,
+        role: 'ai',
+        content: err.message?.includes('VITE_API_BASE_URL')
+          ? '⚠️ ' + err.message
+          : "I'm having trouble connecting to the knowledge base. Please check your network connection and try again.",
+        time: getTime(),
+      }
+      setMessages(prev => [...prev, errMsg])
+    } finally {
+      setIsTyping(false)
+    }
   }, [])
 
   const handleSubmit = (e) => {
@@ -145,10 +156,12 @@ export default function Assistant() {
                     {extra && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                         <SourceCard source={extra.source} />
-                        <ActionCard
-                          action={extra.action}
-                          onReminderCreated={handleReminderCreated}
-                        />
+                        {extra.action && (
+                          <ActionCard
+                            action={extra.action}
+                            onReminderCreated={handleReminderCreated}
+                          />
+                        )}
                       </div>
                     )}
                   </div>

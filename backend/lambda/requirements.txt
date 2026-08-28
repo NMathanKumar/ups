@@ -1,4 +1,0 @@
-# Requirements for WorkPilot AI Backend Lambda
-# Note: For mock local testing, only Python Standard Library is required.
-# When connecting to AWS Bedrock in future steps, add boto3:
-# boto3>=1.34.0
