@@ -33,24 +33,6 @@ export default function Assistant({ currentUser }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
-  // Check for pending search query from Dashboard or other pages
-  useEffect(() => {
-    const pendingPrompt = sessionStorage.getItem('workpilot_pending_prompt')
-    if (pendingPrompt) {
-      sessionStorage.removeItem('workpilot_pending_prompt')
-      sendMessage(pendingPrompt)
-    }
-  }, [sendMessage])
-
-  const addToast = useCallback((message, type = 'success') => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, message, type }])
-  }, [])
-
-  const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id))
-  }, [])
-
   const sendMessage = useCallback(async (text, confirmed = false, originalPrompt = null) => {
     if (!text.trim()) return
     const queryText = originalPrompt || text
@@ -103,6 +85,15 @@ export default function Assistant({ currentUser }) {
       setIsTyping(false)
     }
   }, [empId])
+
+  // Check for pending search query from Dashboard or other pages (declared after sendMessage)
+  useEffect(() => {
+    const pendingPrompt = sessionStorage.getItem('workpilot_pending_prompt')
+    if (pendingPrompt) {
+      sessionStorage.removeItem('workpilot_pending_prompt')
+      sendMessage(pendingPrompt)
+    }
+  }, [sendMessage])
 
   const handleConfirmAction = (msg) => {
     addToast('✓ Confirmation received. Executing workflow...', 'info')
