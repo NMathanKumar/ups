@@ -1,6 +1,14 @@
 import Icon from './Icon'
 
-export default function Header({ pageLabel, onToggleSidebar }) {
+export default function Header({ pageLabel, onToggleSidebar, currentUser }) {
+  const userName = currentUser?.name || 'Priya Sharma'
+  const initials = userName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase()
+
   return (
     <header className="page-header" role="banner">
       <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -30,8 +38,8 @@ export default function Header({ pageLabel, onToggleSidebar }) {
           <Icon name="bell" size={18} />
           <span className="notif-dot" aria-hidden="true" />
         </button>
-        <div className="header-avatar" role="button" tabIndex={0} aria-label="User menu" id="header-avatar">
-          PS
+        <div className="header-avatar" role="button" tabIndex={0} aria-label="User menu" id="header-avatar" style={{ background: 'linear-gradient(135deg, #7e14ff 0%, #47bfff 100%)', color: 'white', fontWeight: 700 }}>
+          {initials}
         </div>
       </div>
     </header>

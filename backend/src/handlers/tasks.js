@@ -69,8 +69,24 @@ export async function handleUpdateTask(event) {
   if (userErr) return badRequest(userErr);
 
   try {
-    const existing = await db.getItem(TABLE(), { userId, taskId });
-    if (!existing) return notFound('Task not found.');
+    let existing = await db.getItem(TABLE(), { userId, taskId });
+
+    if (!existing) {
+      if (body.title || body.category) {
+        existing = {
+          userId,
+          taskId,
+          title: body.title,
+          category: body.category || 'General',
+          dueDate: body.dueDate || null,
+          completed: Boolean(body.completed),
+          createdAt: new Date().toISOString(),
+        };
+        await db.putItem(TABLE(), existing);
+        return ok({ task: existing });
+      }
+      return notFound('Task not found.');
+    }
 
     const updated = await db.updateItem(
       TABLE(),

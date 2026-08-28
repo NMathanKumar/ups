@@ -12,6 +12,7 @@ import { handleChat }             from './handlers/chat.js';
 import { handleGetTasks, handleCreateTask, handleUpdateTask } from './handlers/tasks.js';
 import { handleGetReminders, handleCreateReminder, handleUpdateReminder }          from './handlers/reminders.js';
 import { handleGetConversations } from './handlers/conversations.js';
+import { handleSignUp, handleLogin, handleGetMe } from './handlers/auth.js';
 
 export const handler = async (event) => {
   const method = event.requestContext?.http?.method ?? event.httpMethod ?? 'GET';
@@ -21,6 +22,11 @@ export const handler = async (event) => {
 
   // CORS preflight
   if (method === 'OPTIONS') return corsPreflightResponse();
+
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  if (method === 'POST' && path === '/api/auth/signup') return handleSignUp(event);
+  if (method === 'POST' && path === '/api/auth/login')  return handleLogin(event);
+  if (method === 'GET'  && path === '/api/auth/me')     return handleGetMe(event);
 
   // ── Health ──────────────────────────────────────────────────────────────
   if (method === 'GET' && path === '/api/health') return handleHealth(event);

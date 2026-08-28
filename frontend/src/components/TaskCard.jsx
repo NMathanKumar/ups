@@ -5,11 +5,16 @@ const CATEGORY_COLORS = {
   HR:         { color: 'var(--brand-600)',   bg: 'var(--brand-50)' },
   Onboarding: { color: 'var(--success-600)', bg: 'var(--success-50)' },
   'IT Support':{ color: 'var(--info-600)',   bg: 'var(--info-50)' },
+  IT:         { color: 'var(--info-600)',   bg: 'var(--info-50)' },
   General:    { color: 'var(--gray-600)',    bg: 'var(--gray-100)' },
 }
 
 export default function TaskCard({ task, onToggle }) {
-  const { color, bg } = CATEGORY_COLORS[task.category] || CATEGORY_COLORS.General
+  if (!task) return null
+
+  const catKey = task.category || 'General'
+  const styles = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.General || { color: 'var(--gray-600)', bg: 'var(--gray-100)' }
+  const { color, bg } = styles
 
   return (
     <div
@@ -32,11 +37,11 @@ export default function TaskCard({ task, onToggle }) {
             className="badge"
             style={{ background: bg, color }}
           >
-            {task.category}
+            {task.category || 'General'}
           </span>
           <span className="task-due">
             <Icon name="calendar" size={11} />
-            {task.due}
+            {task.due || task.dueDate || 'Pending'}
           </span>
           {task.urgent && !task.checked && (
             <span className="badge badge-danger">Urgent</span>

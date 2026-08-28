@@ -47,6 +47,14 @@ export function notFound(message = 'Resource not found.') {
   };
 }
 
+export function unauthorized(message = 'Unauthorized.') {
+  return {
+    statusCode: 401,
+    headers: buildCorsHeaders(),
+    body: JSON.stringify({ error: message }),
+  };
+}
+
 export function serverError(message = 'Unable to process the request.') {
   return {
     statusCode: 500,

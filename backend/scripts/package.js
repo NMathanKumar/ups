@@ -27,9 +27,16 @@ const OUTPUT_ZIP = path.resolve(INFRA_TF, 'lambda_backend.zip');
 console.log('\n📦  Building WorkPilot AI Lambda deployment package...\n');
 
 // ── 1. Clean / create dist ───────────────────────────────────────────────────
-console.log('   Cleaning .dist/...');
-if (fs.existsSync(DIST)) fs.rmSync(DIST, { recursive: true, force: true });
-fs.mkdirSync(path.join(DIST, 'src'), { recursive: true });
+if (fs.existsSync(DIST)) {
+  try {
+    fs.rmSync(DIST, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
+  } catch (err) {
+    console.warn('   Warning cleaning .dist, continuing...', err.message);
+  }
+}
+if (!fs.existsSync(path.join(DIST, 'src'))) {
+  fs.mkdirSync(path.join(DIST, 'src'), { recursive: true });
+}
 
 // ── 2. Copy src/ ─────────────────────────────────────────────────────────────
 function copyDir(src, dst) {
@@ -55,23 +62,37 @@ execSync('npm install --omit=dev --prefer-offline --no-audit --no-fund', {
   stdio: 'inherit',
 });
 
-// ── 5. Remove old zip ─────────────────────────────────────────────────────────
-if (fs.existsSync(OUTPUT_ZIP)) fs.rmSync(OUTPUT_ZIP);
+const MICROSERVICES = [
+  'lambda_backend.zip',
+  'agent_service.zip',
+  'task_service.zip',
+  'hr_service.zip',
+  'it_service.zip',
+  'onboarding_service.zip'
+];
 
-// ── 6. Create zip using bsdtar (fast, built into Windows 10+) ─────────────────
-console.log(`\n   Zipping → ${OUTPUT_ZIP}`);
-const tarResult = spawnSync(
-  'tar',
-  ['-a', '-c', '-f', OUTPUT_ZIP, '.'],
-  { cwd: DIST, stdio: 'inherit', shell: false }
-);
+for (const zipName of MICROSERVICES) {
+  const zipPath = path.resolve(INFRA_TF, zipName);
+  if (fs.existsSync(zipPath)) {
+    try {
+      fs.rmSync(zipPath, { force: true, maxRetries: 5, retryDelay: 200 });
+    } catch (e) {
+      // Continue if busy, tar overwrite handles it
+    }
+  }
+  console.log(`   Zipping → ${zipPath}`);
+  const tarResult = spawnSync(
+    'tar',
+    ['-a', '-c', '-f', zipPath, '.'],
+    { cwd: DIST, stdio: 'inherit', shell: false }
+  );
 
-if (tarResult.status !== 0) {
-  console.error('\n❌  tar failed. Exit code:', tarResult.status);
-  if (tarResult.error) console.error(tarResult.error.message);
-  process.exit(1);
+  if (tarResult.status !== 0) {
+    console.error(`\n❌  tar failed for ${zipName}. Exit code:`, tarResult.status);
+    if (tarResult.error) console.error(tarResult.error.message);
+    process.exit(1);
+  }
 }
 
-const size = fs.statSync(OUTPUT_ZIP);
-console.log(`\n✅  Package ready: lambda_backend.zip (${(size.size / 1024 / 1024).toFixed(1)} MB)`);
+console.log(`\n✅  All microservices packages ready in infrastructure/terraform!`);
 console.log('\nNext: cd infrastructure/terraform && terraform apply\n');

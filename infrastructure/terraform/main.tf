@@ -373,11 +373,16 @@ resource "aws_iam_role_policy" "lambda_bedrock" {
 # The zip contains src/ + production node_modules.
 # ------------------------------------------------------------------------------
 
-# Verify the package exists before planning/applying
 locals {
-  lambda_zip_path = "${path.module}/lambda_backend.zip"
+  lambda_zip_path            = "${path.module}/lambda_backend.zip"
+  agent_service_zip_path     = "${path.module}/agent_service.zip"
+  task_service_zip_path      = "${path.module}/task_service.zip"
+  hr_service_zip_path        = "${path.module}/hr_service.zip"
+  it_service_zip_path        = "${path.module}/it_service.zip"
+  onboarding_service_zip_path = "${path.module}/onboarding_service.zip"
 }
 
+# Legacy / Unified Router Lambda
 resource "aws_lambda_function" "api_handler" {
   function_name    = "${var.project_name}-api-handler"
   role             = aws_iam_role.lambda_exec.arn
@@ -406,6 +411,163 @@ resource "aws_lambda_function" "api_handler" {
       KNOWLEDGE_BUCKET                    = aws_s3_bucket.knowledge_bucket.id
       BEDROCK_RELEVANCE_THRESHOLD         = "0.2"
       CONVERSATION_WINDOW_SIZE            = "10"
+      COGNITO_USER_POOL_ID                = aws_cognito_user_pool.user_pool.id
+      COGNITO_CLIENT_ID                   = aws_cognito_user_pool_client.user_pool_client.id
+    }
+  }
+}
+
+# Microservice 1: Agent & RAG Service
+resource "aws_lambda_function" "agent_service" {
+  function_name    = "${var.project_name}-agent-service"
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "src/microservices/agent-service/index.handler"
+  runtime          = "nodejs20.x"
+  filename         = local.agent_service_zip_path
+  source_code_hash = filebase64sha256(local.agent_service_zip_path)
+  timeout          = 30
+  memory_size      = 512
+
+  environment {
+    variables = {
+      AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
+      ENVIRONMENT                         = var.environment
+      FRONTEND_ORIGIN                     = "*"
+      BEDROCK_KNOWLEDGE_BASE_ID           = aws_bedrockagent_knowledge_base.employee_kb.id
+      BEDROCK_MODEL_ID                    = var.bedrock_model_id
+      TASKS_TABLE_NAME                    = aws_dynamodb_table.tasks.name
+      REMINDERS_TABLE_NAME                = aws_dynamodb_table.reminders.name
+      CONVERSATIONS_TABLE_NAME            = aws_dynamodb_table.conversations.name
+      WORKFLOWS_TABLE_NAME                = aws_dynamodb_table.workflows.name
+      EMPLOYEES_TABLE_NAME                = aws_dynamodb_table.employees.name
+      LEAVE_BALANCES_TABLE_NAME           = aws_dynamodb_table.leave_balances.name
+      ASSETS_TABLE_NAME                   = aws_dynamodb_table.assets.name
+      PROJECTS_TABLE_NAME                 = aws_dynamodb_table.projects.name
+      KNOWLEDGE_BUCKET                    = aws_s3_bucket.knowledge_bucket.id
+      BEDROCK_RELEVANCE_THRESHOLD         = "0.2"
+      CONVERSATION_WINDOW_SIZE            = "10"
+      COGNITO_USER_POOL_ID                = aws_cognito_user_pool.user_pool.id
+      COGNITO_CLIENT_ID                   = aws_cognito_user_pool_client.user_pool_client.id
+    }
+  }
+}
+
+# Microservice 2: Task & Reminders Service
+resource "aws_lambda_function" "task_service" {
+  function_name    = "${var.project_name}-task-service"
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "src/microservices/task-service/index.handler"
+  runtime          = "nodejs20.x"
+  filename         = local.task_service_zip_path
+  source_code_hash = filebase64sha256(local.task_service_zip_path)
+  timeout          = 15
+  memory_size      = 256
+
+  environment {
+    variables = {
+      AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
+      ENVIRONMENT                         = var.environment
+      FRONTEND_ORIGIN                     = "*"
+      BEDROCK_KNOWLEDGE_BASE_ID           = aws_bedrockagent_knowledge_base.employee_kb.id
+      BEDROCK_MODEL_ID                    = var.bedrock_model_id
+      TASKS_TABLE_NAME                    = aws_dynamodb_table.tasks.name
+      REMINDERS_TABLE_NAME                = aws_dynamodb_table.reminders.name
+      CONVERSATIONS_TABLE_NAME            = aws_dynamodb_table.conversations.name
+      WORKFLOWS_TABLE_NAME                = aws_dynamodb_table.workflows.name
+      EMPLOYEES_TABLE_NAME                = aws_dynamodb_table.employees.name
+      LEAVE_BALANCES_TABLE_NAME           = aws_dynamodb_table.leave_balances.name
+      ASSETS_TABLE_NAME                   = aws_dynamodb_table.assets.name
+      PROJECTS_TABLE_NAME                 = aws_dynamodb_table.projects.name
+    }
+  }
+}
+
+# Microservice 3: HR & Employee Service
+resource "aws_lambda_function" "hr_service" {
+  function_name    = "${var.project_name}-hr-service"
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "src/microservices/hr-service/index.handler"
+  runtime          = "nodejs20.x"
+  filename         = local.hr_service_zip_path
+  source_code_hash = filebase64sha256(local.hr_service_zip_path)
+  timeout          = 15
+  memory_size      = 256
+
+  environment {
+    variables = {
+      AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
+      ENVIRONMENT                         = var.environment
+      FRONTEND_ORIGIN                     = "*"
+      BEDROCK_KNOWLEDGE_BASE_ID           = aws_bedrockagent_knowledge_base.employee_kb.id
+      BEDROCK_MODEL_ID                    = var.bedrock_model_id
+      TASKS_TABLE_NAME                    = aws_dynamodb_table.tasks.name
+      REMINDERS_TABLE_NAME                = aws_dynamodb_table.reminders.name
+      CONVERSATIONS_TABLE_NAME            = aws_dynamodb_table.conversations.name
+      WORKFLOWS_TABLE_NAME                = aws_dynamodb_table.workflows.name
+      EMPLOYEES_TABLE_NAME                = aws_dynamodb_table.employees.name
+      LEAVE_BALANCES_TABLE_NAME           = aws_dynamodb_table.leave_balances.name
+      ASSETS_TABLE_NAME                   = aws_dynamodb_table.assets.name
+      PROJECTS_TABLE_NAME                 = aws_dynamodb_table.projects.name
+    }
+  }
+}
+
+# Microservice 4: IT Support & Assets Service
+resource "aws_lambda_function" "it_service" {
+  function_name    = "${var.project_name}-it-service"
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "src/microservices/it-service/index.handler"
+  runtime          = "nodejs20.x"
+  filename         = local.it_service_zip_path
+  source_code_hash = filebase64sha256(local.it_service_zip_path)
+  timeout          = 15
+  memory_size      = 256
+
+  environment {
+    variables = {
+      AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
+      ENVIRONMENT                         = var.environment
+      FRONTEND_ORIGIN                     = "*"
+      BEDROCK_KNOWLEDGE_BASE_ID           = aws_bedrockagent_knowledge_base.employee_kb.id
+      BEDROCK_MODEL_ID                    = var.bedrock_model_id
+      TASKS_TABLE_NAME                    = aws_dynamodb_table.tasks.name
+      REMINDERS_TABLE_NAME                = aws_dynamodb_table.reminders.name
+      CONVERSATIONS_TABLE_NAME            = aws_dynamodb_table.conversations.name
+      WORKFLOWS_TABLE_NAME                = aws_dynamodb_table.workflows.name
+      EMPLOYEES_TABLE_NAME                = aws_dynamodb_table.employees.name
+      LEAVE_BALANCES_TABLE_NAME           = aws_dynamodb_table.leave_balances.name
+      ASSETS_TABLE_NAME                   = aws_dynamodb_table.assets.name
+      PROJECTS_TABLE_NAME                 = aws_dynamodb_table.projects.name
+    }
+  }
+}
+
+# Microservice 5: Onboarding Workflow Service
+resource "aws_lambda_function" "onboarding_service" {
+  function_name    = "${var.project_name}-onboarding-service"
+  role             = aws_iam_role.lambda_exec.arn
+  handler          = "src/microservices/onboarding-service/index.handler"
+  runtime          = "nodejs20.x"
+  filename         = local.onboarding_service_zip_path
+  source_code_hash = filebase64sha256(local.onboarding_service_zip_path)
+  timeout          = 15
+  memory_size      = 256
+
+  environment {
+    variables = {
+      AWS_NODEJS_CONNECTION_REUSE_ENABLED = "1"
+      ENVIRONMENT                         = var.environment
+      FRONTEND_ORIGIN                     = "*"
+      BEDROCK_KNOWLEDGE_BASE_ID           = aws_bedrockagent_knowledge_base.employee_kb.id
+      BEDROCK_MODEL_ID                    = var.bedrock_model_id
+      TASKS_TABLE_NAME                    = aws_dynamodb_table.tasks.name
+      REMINDERS_TABLE_NAME                = aws_dynamodb_table.reminders.name
+      CONVERSATIONS_TABLE_NAME            = aws_dynamodb_table.conversations.name
+      WORKFLOWS_TABLE_NAME                = aws_dynamodb_table.workflows.name
+      EMPLOYEES_TABLE_NAME                = aws_dynamodb_table.employees.name
+      LEAVE_BALANCES_TABLE_NAME           = aws_dynamodb_table.leave_balances.name
+      ASSETS_TABLE_NAME                   = aws_dynamodb_table.assets.name
+      PROJECTS_TABLE_NAME                 = aws_dynamodb_table.projects.name
     }
   }
 }
@@ -430,79 +592,137 @@ resource "aws_apigatewayv2_stage" "default" {
   auto_deploy = true
 }
 
-resource "aws_apigatewayv2_integration" "lambda_integration" {
+# Integrations
+resource "aws_apigatewayv2_integration" "agent_service_integration" {
   api_id           = aws_apigatewayv2_api.http_api.id
   integration_type = "AWS_PROXY"
-  integration_uri  = aws_lambda_function.api_handler.invoke_arn
+  integration_uri  = aws_lambda_function.agent_service.invoke_arn
 }
 
-# Route: POST /api/chat
+resource "aws_apigatewayv2_integration" "task_service_integration" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.task_service.invoke_arn
+}
+
+resource "aws_apigatewayv2_integration" "hr_service_integration" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.hr_service.invoke_arn
+}
+
+resource "aws_apigatewayv2_integration" "it_service_integration" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.it_service.invoke_arn
+}
+
+resource "aws_apigatewayv2_integration" "onboarding_service_integration" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.onboarding_service.invoke_arn
+}
+
+# Route: POST /api/chat -> Agent Service
 resource "aws_apigatewayv2_route" "chat_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "POST /api/chat"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.agent_service_integration.id}"
 }
 
-# Route: GET /api/health
+# Route: GET /api/health -> Agent Service
 resource "aws_apigatewayv2_route" "health_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "GET /api/health"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.agent_service_integration.id}"
 }
 
-# Route: GET /api/tasks
-resource "aws_apigatewayv2_route" "tasks_get_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "GET /api/tasks"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
-
-# Route: POST /api/tasks
-resource "aws_apigatewayv2_route" "tasks_post_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "POST /api/tasks"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
-
-# Route: PATCH /api/tasks/{taskId}
-resource "aws_apigatewayv2_route" "tasks_patch_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "PATCH /api/tasks/{taskId}"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
-
-# Route: GET /api/reminders
-resource "aws_apigatewayv2_route" "reminders_get_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "GET /api/reminders"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
-
-# Route: POST /api/reminders
-resource "aws_apigatewayv2_route" "reminders_post_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "POST /api/reminders"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
-
-# Route: PATCH /api/reminders/{reminderId}
-resource "aws_apigatewayv2_route" "reminders_patch_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "PATCH /api/reminders/{reminderId}"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
-
-# Route: GET /api/conversations
+# Route: GET /api/conversations -> Agent Service
 resource "aws_apigatewayv2_route" "conversations_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "GET /api/conversations"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.agent_service_integration.id}"
 }
 
-resource "aws_lambda_permission" "api_gw_permission" {
-  statement_id  = "AllowExecutionFromAPIGateway"
+# Route: GET /api/tasks -> Task Service
+resource "aws_apigatewayv2_route" "tasks_get_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /api/tasks"
+  target    = "integrations/${aws_apigatewayv2_integration.task_service_integration.id}"
+}
+
+# Route: POST /api/tasks -> Task Service
+resource "aws_apigatewayv2_route" "tasks_post_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /api/tasks"
+  target    = "integrations/${aws_apigatewayv2_integration.task_service_integration.id}"
+}
+
+# Route: PATCH /api/tasks/{taskId} -> Task Service
+resource "aws_apigatewayv2_route" "tasks_patch_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "PATCH /api/tasks/{taskId}"
+  target    = "integrations/${aws_apigatewayv2_integration.task_service_integration.id}"
+}
+
+# Route: GET /api/reminders -> Task Service
+resource "aws_apigatewayv2_route" "reminders_get_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /api/reminders"
+  target    = "integrations/${aws_apigatewayv2_integration.task_service_integration.id}"
+}
+
+# Route: POST /api/reminders -> Task Service
+resource "aws_apigatewayv2_route" "reminders_post_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /api/reminders"
+  target    = "integrations/${aws_apigatewayv2_integration.task_service_integration.id}"
+}
+
+# Route: PATCH /api/reminders/{reminderId} -> Task Service
+resource "aws_apigatewayv2_route" "reminders_patch_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "PATCH /api/reminders/{reminderId}"
+  target    = "integrations/${aws_apigatewayv2_integration.task_service_integration.id}"
+}
+
+# Lambda Permissions for API Gateway Invocation
+resource "aws_lambda_permission" "agent_service_perm" {
+  statement_id  = "AllowAgentServiceExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api_handler.function_name
+  function_name = aws_lambda_function.agent_service.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "task_service_perm" {
+  statement_id  = "AllowTaskServiceExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.task_service.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "hr_service_perm" {
+  statement_id  = "AllowHRServiceExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.hr_service.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "it_service_perm" {
+  statement_id  = "AllowITServiceExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.it_service.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "onboarding_service_perm" {
+  statement_id  = "AllowOnboardingServiceExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.onboarding_service.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
@@ -732,4 +952,154 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
       }
     ]
   })
+}
+
+# ------------------------------------------------------------------------------
+# AWS Cognito User Pool for Employee Authentication
+# ------------------------------------------------------------------------------
+resource "aws_cognito_user_pool" "user_pool" {
+  name = "${var.project_name}-user-pool"
+
+  auto_verified_attributes = ["email"]
+  username_attributes      = ["email"]
+
+  password_policy {
+    minimum_length    = 6
+    require_lowercase = false
+    require_numbers   = false
+    require_symbols   = false
+    require_uppercase = false
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "email"
+    required                 = true
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "name"
+    required                 = false
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "phone_number"
+    required                 = false
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "gender"
+    required                 = false
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 50
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "designation"
+    required                 = false
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+}
+
+resource "aws_cognito_user_pool_client" "user_pool_client" {
+  name         = "${var.project_name}-user-pool-client"
+  user_pool_id = aws_cognito_user_pool.user_pool.id
+
+  explicit_auth_flows = [
+    "ALLOW_USER_PASSWORD_AUTH",
+    "ALLOW_ADMIN_USER_PASSWORD_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH"
+  ]
+
+  generate_secret = false
+}
+
+resource "aws_iam_role_policy" "lambda_cognito" {
+  name = "${var.project_name}-lambda-cognito-policy"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:SignUp",
+          "cognito-idp:AdminConfirmSignUp",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminSetUserPassword",
+          "cognito-idp:AdminInitiateAuth",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:InitiateAuth",
+          "cognito-idp:GetUser"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# ------------------------------------------------------------------------------
+# Auth Routes
+# ------------------------------------------------------------------------------
+resource "aws_apigatewayv2_route" "auth_signup_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /api/auth/signup"
+  target    = "integrations/${aws_apigatewayv2_integration.agent_service_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_login_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "POST /api/auth/login"
+  target    = "integrations/${aws_apigatewayv2_integration.agent_service_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "auth_me_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "GET /api/auth/me"
+  target    = "integrations/${aws_apigatewayv2_integration.agent_service_integration.id}"
+}
+
+output "cognito_user_pool_id" {
+  value = aws_cognito_user_pool.user_pool.id
+}
+
+output "cognito_client_id" {
+  value = aws_cognito_user_pool_client.user_pool_client.id
 }

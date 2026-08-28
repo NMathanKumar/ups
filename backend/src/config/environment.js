@@ -29,23 +29,24 @@ let _config = null;
 export function getConfig() {
   if (!_config) {
     _config = {
-      awsRegion:              require_env('AWS_REGION'),
-      bedrockKnowledgeBaseId: require_env('BEDROCK_KNOWLEDGE_BASE_ID'),
-      bedrockModelId:         require_env('BEDROCK_MODEL_ID'),
-      tasksTableName:         require_env('TASKS_TABLE_NAME'),
-      remindersTableName:     require_env('REMINDERS_TABLE_NAME'),
-      conversationsTableName: require_env('CONVERSATIONS_TABLE_NAME'),
-      workflowsTableName:     require_env('WORKFLOWS_TABLE_NAME'),
-      // Enterprise structured data tables (Step 13)
-      employeesTableName:     require_env('EMPLOYEES_TABLE_NAME'),
-      leaveBalancesTableName: require_env('LEAVE_BALANCES_TABLE_NAME'),
-      assetsTableName:        require_env('ASSETS_TABLE_NAME'),
-      projectsTableName:      require_env('PROJECTS_TABLE_NAME'),
-      frontendOrigin:         optional_env('FRONTEND_ORIGIN', 'http://localhost:5173'),
+      awsRegion:              optional_env('AWS_REGION', 'us-east-1'),
+      bedrockKnowledgeBaseId: optional_env('BEDROCK_KNOWLEDGE_BASE_ID', 'NU0E4AFFM2'),
+      bedrockModelId:         optional_env('BEDROCK_MODEL_ID', 'anthropic.claude-3-haiku-20240307-v1:0'),
+      tasksTableName:         optional_env('TASKS_TABLE_NAME', 'employee-ai-assistant-tasks'),
+      remindersTableName:     optional_env('REMINDERS_TABLE_NAME', 'employee-ai-assistant-employee_reminders'),
+      conversationsTableName: optional_env('CONVERSATIONS_TABLE_NAME', 'employee-ai-assistant-conversations'),
+      workflowsTableName:     optional_env('WORKFLOWS_TABLE_NAME', 'employee-ai-assistant-workflows'),
+      employeesTableName:     optional_env('EMPLOYEES_TABLE_NAME', 'employee-ai-assistant-employees'),
+      leaveBalancesTableName: optional_env('LEAVE_BALANCES_TABLE_NAME', 'employee-ai-assistant-leave-balances'),
+      assetsTableName:        optional_env('ASSETS_TABLE_NAME', 'employee-ai-assistant-assets'),
+      projectsTableName:      optional_env('PROJECTS_TABLE_NAME', 'employee-ai-assistant-projects'),
+      frontendOrigin:         optional_env('FRONTEND_ORIGIN', '*'),
       bedrockRelevanceThreshold: parseFloat(
         optional_env('BEDROCK_RELEVANCE_THRESHOLD', '0.2')
       ),
       conversationWindowSize: parseInt(optional_env('CONVERSATION_WINDOW_SIZE', '10'), 10),
+      cognitoUserPoolId: optional_env('COGNITO_USER_POOL_ID', ''),
+      cognitoClientId:   optional_env('COGNITO_CLIENT_ID', ''),
     };
   }
   return _config;
