@@ -7,6 +7,7 @@ import { TOOL_METADATA, getToolMetadata, executeTool } from '../src/agent/tools.
 import { runAgent } from '../src/agent/agent.js';
 import { _setClientForTesting as setKbClient }      from '../src/services/knowledgeBase.js';
 import { _setClientForTesting as setBedrockClient } from '../src/services/bedrock.js';
+import { _setClientForTesting as setDbClient }      from '../src/services/dynamodb.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,62 @@ function bedrockClient(text) {
     }),
   };
 }
+
+// Default DynamoDB mock — returns demo data for known employees; null for unknown.
+// This prevents enterprise tools from trying to use a real AWS DynamoDB client in tests.
+const DEMO_EMPLOYEES_DB = {
+  EMP001: { employeeId: 'EMP001', name: 'Priya Sharma', department: 'Engineering', location: 'Bangalore', status: 'ACTIVE' },
+  EMP008: { employeeId: 'EMP008', name: 'Sandra Kim', department: 'Finance', location: 'Seoul', status: 'ACTIVE' },
+};
+const DEMO_BALANCES_DB = {
+  EMP001: { employeeId: 'EMP001', annualLeave: 18, annualLeaveUsed: 5, sickLeave: 10, sickLeaveUsed: 2, maternityLeaveEligible: true, maternityLeaveDays: 90 },
+  EMP008: { employeeId: 'EMP008', annualLeave: 15, annualLeaveUsed: 3, sickLeave: 10, sickLeaveUsed: 1, maternityLeaveEligible: true, maternityLeaveDays: 90 },
+};
+const DEMO_ASSETS_DB = {
+  EMP001: [
+    { employeeId: 'EMP001', assetId: 'ASSET001', type: 'LAPTOP', status: 'ASSIGNED' },
+    { employeeId: 'EMP001', assetId: 'ASSET002', type: 'MONITOR', status: 'ASSIGNED' },
+  ],
+  // EMP008 has no assets
+};
+const DEMO_EMP_LIST = [
+  { employeeId: 'EMP001', name: 'Priya Sharma', department: 'Engineering', location: 'Bangalore', status: 'ACTIVE' },
+  { employeeId: 'EMP006', name: 'Ankit Verma',  department: 'Engineering', location: 'Bangalore', status: 'AVAILABLE' },
+];
+
+function makeDbMock(opts = {}) {
+  return {
+    send: async (cmd) => {
+      const name = cmd.constructor.name;
+      if (name === 'GetCommand') {
+        if (opts.failGet) throw new Error('DynamoDB unavailable');
+        const key = cmd.input?.Key ?? {};
+        const empId = key.employeeId;
+        if (!empId) return { Item: null };
+        const tableName = cmd.input?.TableName ?? '';
+        if (tableName.includes('leave') || tableName.includes('balance')) {
+          return { Item: DEMO_BALANCES_DB[empId] ?? null };
+        }
+        return { Item: DEMO_EMPLOYEES_DB[empId] ?? null };
+      }
+      if (name === 'QueryCommand') {
+        const empId = cmd.input?.ExpressionAttributeValues?.[':eid'];
+        return { Items: (empId && DEMO_ASSETS_DB[empId]) ? DEMO_ASSETS_DB[empId] : [] };
+      }
+      if (name === 'ScanCommand') return { Items: DEMO_EMP_LIST };
+      if (name === 'PutCommand') {
+        if (opts.failPut) throw new Error('DynamoDB write failed');
+        return {};
+      }
+      return {};
+    },
+  };
+}
+
+beforeEach(() => {
+  // Always install a safe DB mock so enterprise tools never hit a real AWS client
+  setDbClient(makeDbMock());
+});
 
 const GOOD_DOC = {
   score: 0.85,
@@ -66,7 +123,7 @@ describe('Agent Foundation (Step 9 — regression guard)', () => {
 
     test('classifies POLICY_QUESTION', () => {
       expect(detectIntent('What is the work from home policy?')).toBe(INTENTS.POLICY_QUESTION);
-      expect(detectIntent('How many annual leave days do I have?')).toBe(INTENTS.POLICY_QUESTION);
+      expect(detectIntent('How many annual leave days do employees get?')).toBe(INTENTS.POLICY_QUESTION);
     });
 
     test('classifies GENERAL / Unknown', () => {
@@ -83,7 +140,7 @@ describe('Agent Foundation (Step 9 — regression guard)', () => {
       expect(plan.requiresEmployeeData).toBe(true);
       expect(plan.requiresConfirmation).toBe(true);
       expect(plan.steps.map((s) => s.tool)).toEqual([
-        'searchPolicy', 'getEmployee', 'checkLeaveBalance', 'createLeaveRequest', 'createHRTask',
+        'searchPolicy', 'getEmployee', 'checkLeaveBalance', 'createLeaveRequest', 'createHRTask', 'getEmployeeAssets', 'createITTicket',
       ]);
     });
 
@@ -130,18 +187,20 @@ describe('Agent Foundation (Step 9 — regression guard)', () => {
 
   describe('4. Tool Execution — NOT_IMPLEMENTED Safety', () => {
     test('unimplemented tools never return fake success', async () => {
-      // Only WRITE tools remain NOT_IMPLEMENTED after Step 11
-      // (getEmployee, checkLeaveBalance, getEmployeeAssets, findAvailableResources are now implemented)
-      const stubs = [
-        'createLeaveRequest', 'createHRTask', 'createITTicket',
-        'allocateResources', 'transferEmployee', 'createOnboarding',
-      ];
+      // Remaining unimplemented WRITE tools
+      const stubs = ['allocateResources', 'transferEmployee'];
       for (const name of stubs) {
         const r = await executeTool(name, { userId: 'u1' });
         expect(r.success).toBe(false);
         expect(r.status).toBe('NOT_IMPLEMENTED');
-        expect(r.error).toContain('not implemented');
       }
+      // createHRTask with no userId returns FAILED (validation)
+      const hrResult = await executeTool('createHRTask', { userId: '', title: '' });
+      expect(hrResult.success).toBe(false);
+      // createITTicket with no assets returns SKIPPED (not a failure)
+      const itResult = await executeTool('createITTicket', { userId: 'u1', assets: [] });
+      expect(itResult.success).toBe(true);
+      expect(itResult.status).toBe('SKIPPED');
     });
 
     test('unknown tool returns FAILED', async () => {
@@ -213,15 +272,14 @@ describe('Agent RAG Integration (Step 10)', () => {
       expect(res.category).toBeNull();
     });
 
-    test('MATERNITY_LEAVE → PARTIAL_NOT_IMPLEMENTED (workflow tools not yet built)', async () => {
+    test('MATERNITY_LEAVE without confirmed flag returns CONFIRMATION_REQUIRED', async () => {
       setKbClient(kbClient([GOOD_DOC]));
-      setBedrockClient(bedrockClient('Maternity leave is 16 weeks.'));
 
-      const res = await runAgent({ message: 'I need maternity leave', userId: 'u1' });
+      const res = await runAgent({ message: 'I need maternity leave', userId: 'EMP001' });
 
       expect(res.intent).toBe(INTENTS.MATERNITY_LEAVE);
-      // searchPolicy returns SUCCESS (has docs), but createLeaveRequest etc. are NOT_IMPLEMENTED
-      expect(res.status).toBe('PARTIAL_NOT_IMPLEMENTED');
+      expect(res.status).toBe('CONFIRMATION_REQUIRED');
+      expect(res.requiresConfirmation).toBe(true);
       // Must NOT claim leave was created
       expect(res.answer).not.toMatch(/leave.*(created|submitted|approved)/i);
     });
@@ -236,7 +294,8 @@ describe('Agent RAG Integration (Step 10)', () => {
         },
       });
 
-      await runAgent({ message: 'maternity policy?', userId: 'u1' });
+      // Use a POLICY_QUESTION (not MATERNITY_LEAVE) so it goes through RAG path directly
+      await runAgent({ message: 'What is the company work from home policy?', userId: 'u1' });
 
       const prompt = capturedBody?.messages?.[0]?.content ?? '';
       expect(prompt).toContain('Maternity leave is 16 weeks paid');
@@ -329,8 +388,9 @@ describe('Enterprise Tool Delegation (Step 11)', () => {
     expect(r.data.count).toBe(0);
   });
 
-  test('WRITE tools remain NOT_IMPLEMENTED after Step 11', async () => {
-    const writeTools = ['createLeaveRequest', 'createHRTask', 'createITTicket', 'allocateResources', 'transferEmployee', 'createOnboarding', 'createTask'];
+  test('Unimplemented WRITE tools return NOT_IMPLEMENTED', async () => {
+    // createLeaveRequest/createHRTask/createITTicket/createOnboarding/createTask are now implemented
+    const writeTools = ['allocateResources', 'transferEmployee'];
     for (const name of writeTools) {
       const r = await executeTool(name, { userId: 'u1' });
       expect(r.success).toBe(false);

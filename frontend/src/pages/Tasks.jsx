@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TaskCard from '../components/TaskCard'
 import Icon from '../components/Icon'
+import { fetchTasks, updateTaskStatus } from '../services/api'
 import { mockTasks } from '../services/mockData'
+
+const USER_ID = 'EMP001'
 
 const SECTIONS = [
   { id: 'today',     label: 'Today',     icon: 'zap' },
@@ -10,13 +13,50 @@ const SECTIONS = [
 ]
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState(mockTasks)
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
   const [activeSection, setActiveSection] = useState('today')
 
-  const handleToggle = (id) => {
+  const loadTasks = useCallback(async () => {
+    setLoading(true)
+    const fetched = await fetchTasks(USER_ID)
+    if (fetched && fetched.length > 0) {
+      const mapped = fetched.map(t => ({
+        id: t.taskId,
+        title: t.title,
+        category: t.category || 'HR',
+        checked: t.completed ?? false,
+        dueDate: t.dueDate || 'Pending',
+        section: t.completed ? 'completed' : 'today',
+        workflowId: t.workflowId,
+      }))
+      setTasks(mapped)
+    } else {
+      setTasks(mockTasks)
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadTasks()
+
+    const handleUpdate = () => {
+      loadTasks()
+    }
+    window.addEventListener('workpilot-data-updated', handleUpdate)
+    return () => window.removeEventListener('workpilot-data-updated', handleUpdate)
+  }, [loadTasks])
+
+  const handleToggle = async (id) => {
+    const target = tasks.find(t => t.id === id)
+    if (!target) return
+
+    const newStatus = !target.checked
     setTasks(prev =>
-      prev.map(t => t.id === id ? { ...t, checked: !t.checked } : t)
+      prev.map(t => t.id === id ? { ...t, checked: newStatus, section: newStatus ? 'completed' : 'today' } : t)
     )
+
+    await updateTaskStatus(id, USER_ID, newStatus)
   }
 
   const filtered = tasks.filter(t => t.section === activeSection)
@@ -34,10 +74,6 @@ export default function Tasks() {
             {todayCount} task{todayCount !== 1 ? 's' : ''} remaining today
           </p>
         </div>
-        <button className="btn btn-primary" id="tasks-add-btn">
-          <Icon name="check" size={15} />
-          Add Task
-        </button>
       </div>
 
       {/* Section Tabs */}
@@ -76,7 +112,11 @@ export default function Tasks() {
       {/* Task List */}
       <div className="card">
         <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 8 }} role="list" aria-label={`${activeSection} tasks`}>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-tertiary)' }}>
+              <p>Loading tasks from DynamoDB...</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-tertiary)' }}>
               <Icon name="check" size={32} />
               <p style={{ marginTop: 8 }}>No tasks in this section</p>

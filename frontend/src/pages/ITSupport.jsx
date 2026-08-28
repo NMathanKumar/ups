@@ -1,19 +1,16 @@
 import { useState } from 'react'
 import Icon from '../components/Icon'
+import SourceCard from '../components/SourceCard'
+import { queryAssistant } from '../services/api'
+
+const USER_ID = 'EMP001'
 
 const COMMON_ISSUES = [
-  { id: 'vpn',      label: 'VPN Not Working',  icon: 'wifi',    color: 'var(--danger-500)',  bg: 'var(--danger-50)' },
-  { id: 'password', label: 'Password Reset',   icon: 'lock',    color: 'var(--warning-500)', bg: 'var(--warning-50)' },
-  { id: 'laptop',   label: 'Laptop Issue',     icon: 'laptop',  color: 'var(--info-500)',    bg: 'var(--info-50)' },
-  { id: 'software', label: 'Software Access',  icon: 'package', color: 'var(--brand-500)',   bg: 'var(--brand-50)' },
+  { id: 'vpn',      label: 'VPN Not Working',  icon: 'wifi',    color: 'var(--danger-500)',  bg: 'var(--danger-50)', text: 'What should I do if my laptop is not connecting to VPN?' },
+  { id: 'password', label: 'Password Reset',   icon: 'lock',    color: 'var(--warning-500)', bg: 'var(--warning-50)', text: 'How do I reset my company password?' },
+  { id: 'laptop',   label: 'Laptop Support',   icon: 'laptop',  color: 'var(--info-500)',    bg: 'var(--info-50)', text: 'How do I get laptop hardware support or replacement?' },
+  { id: 'software', label: 'Software Access',  icon: 'package', color: 'var(--brand-500)',   bg: 'var(--brand-50)', text: 'How do I request software access and permissions?' },
 ]
-
-const MOCK_IT_RESPONSES = {
-  vpn: "For VPN issues:\n\n1. Restart your VPN client completely.\n2. Check your internet connection.\n3. Try a different VPN server region.\n4. Clear the VPN client cache and reconnect.\n\nIf the issue persists, a support ticket will be raised and IT will respond within 2 business hours.",
-  password: "To reset your password:\n\n1. Go to the Self-Service Portal at identity.company.com.\n2. Click 'Forgot Password'.\n3. Verify your identity using your company email.\n4. Follow the reset link sent to your registered email.\n\nFor urgent access, call the IT helpdesk directly.",
-  laptop: "For laptop hardware issues:\n\n1. Check if the device needs a restart.\n2. Run the built-in hardware diagnostics tool.\n3. Check for pending OS/driver updates.\n\nIf the issue is physical damage or won't boot, please log a priority ticket and bring the device to the IT office.",
-  software: "For software access requests:\n\n1. Submit a request through the IT Service Portal.\n2. Your manager will be notified for approval.\n3. Once approved, access is provisioned within 24 hours.\n\nFor urgent requirements, request expedited processing and mention your manager's name.",
-}
 
 export default function ITSupport() {
   const [issueText, setIssueText] = useState('')
@@ -23,28 +20,30 @@ export default function ITSupport() {
 
   const handleQuickIssue = (issue) => {
     setSelectedIssue(issue.id)
-    setIssueText(`I have an issue with: ${issue.label}`)
-    setResponse(null)
+    setIssueText(issue.text)
+    handleGetHelpText(issue.text)
   }
 
-  const handleGetHelp = () => {
-    if (!issueText.trim()) return
+  const handleGetHelpText = async (text) => {
+    if (!text.trim()) return
     setLoading(true)
     setResponse(null)
 
-    setTimeout(() => {
-      setLoading(false)
-      const lower = issueText.toLowerCase()
-      let key = 'vpn'
-      if (lower.includes('password') || lower.includes('reset')) key = 'password'
-      else if (lower.includes('laptop') || lower.includes('hardware')) key = 'laptop'
-      else if (lower.includes('software') || lower.includes('access') || lower.includes('install')) key = 'software'
-
+    try {
+      const res = await queryAssistant(text, USER_ID)
+      setResponse(res)
+    } catch (err) {
       setResponse({
-        text: MOCK_IT_RESPONSES[key],
-        ticketId: `INC-${Math.floor(Math.random() * 90000) + 10000}`,
+        answer: `Unable to connect to IT Knowledge Base. Please try again. (${err.message})`,
+        sources: [],
       })
-    }, 1200)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGetHelp = () => {
+    handleGetHelpText(issueText)
   }
 
   return (
@@ -54,11 +53,11 @@ export default function ITSupport() {
         <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
           IT Support
         </h1>
-        <p className="text-secondary">Get AI-powered help for common IT issues</p>
+        <p className="text-secondary">Get AI-powered help grounded in company IT documentation</p>
       </div>
 
       {/* Common Issues */}
-      <h2 className="section-title">Common Issues</h2>
+      <h2 className="section-title">Common IT Queries</h2>
       <div className="grid-4 mb-6">
         {COMMON_ISSUES.map(issue => (
           <button
@@ -84,14 +83,14 @@ export default function ITSupport() {
       {/* AI Help Input */}
       <div className="card mb-4">
         <div className="card-header">
-          <span className="card-title">Describe Your Issue</span>
-          <span className="badge badge-brand">AI Powered</span>
+          <span className="card-title">Ask IT Support AI</span>
+          <span className="badge badge-brand">Bedrock Knowledge Base</span>
         </div>
         <div className="card-body">
           <textarea
             id="it-issue-input"
             className="form-input form-textarea"
-            placeholder="Describe your IT issue in detail... e.g. 'My VPN disconnects every 30 minutes when I'm on WiFi'"
+            placeholder="Describe your IT issue... e.g. 'My VPN isn't connecting on WiFi'"
             value={issueText}
             onChange={e => setIssueText(e.target.value)}
             rows={3}
@@ -99,7 +98,7 @@ export default function ITSupport() {
           />
           <div className="flex items-center justify-between mt-3" style={{ flexWrap: 'wrap', gap: 8 }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-              AI will provide troubleshooting steps and auto-escalate if needed
+              Responses are grounded in verified enterprise IT documentation.
             </span>
             <button
               className="btn btn-primary"
@@ -108,7 +107,7 @@ export default function ITSupport() {
               id="it-get-help-btn"
             >
               {loading ? (
-                <span>Analyzing...</span>
+                <span>Searching IT Knowledge Base...</span>
               ) : (
                 <>
                   <Icon name="zap" size={15} />
@@ -129,7 +128,7 @@ export default function ITSupport() {
                 <span key={i} className="typing-dot" style={{ animationDelay: `${i * 0.2}s` }} />
               ))}
             </div>
-            Analyzing your issue...
+            Searching IT policy documents via Bedrock RAG...
           </div>
         </div>
       )}
@@ -145,23 +144,25 @@ export default function ITSupport() {
                 <span style={{ color: 'var(--brand-500)' }}><Icon name="zap" size={16} /></span>
                 <span className="card-title">AI Recommendation</span>
               </div>
-              <span className="badge badge-success">Ticket: {response.ticketId}</span>
+              {response.category && <span className="badge badge-brand">{response.category}</span>}
             </div>
             <div className="card-body">
               <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem', lineHeight: 1.65, color: 'var(--text-primary)' }}>
-                {response.text}
+                {response.answer}
               </div>
+
+              {response.sources && response.sources.length > 0 && (
+                <div style={{ marginTop: 14 }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Verified Source:</span>
+                  <div style={{ marginTop: 6 }}>
+                    <SourceCard source={{ fileName: response.sources[0].document, system: response.sources[0].category || 'IT Support' }} />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-            <button className="btn btn-primary" id="it-log-ticket-btn">
-              <Icon name="external" size={14} />
-              Log Full Ticket
-            </button>
-            <button className="btn btn-secondary" id="it-escalate-btn">
-              Escalate to Engineer
-            </button>
             <button className="btn btn-ghost" onClick={() => { setResponse(null); setIssueText(''); setSelectedIssue(null) }}>
               Ask Another Question
             </button>
@@ -178,10 +179,10 @@ export default function ITSupport() {
         <div className="flex items-center gap-10" style={{ flexWrap: 'wrap', gap: 24 }}>
           <div className="flex items-center gap-2">
             <span className="status-dot online" />
-            <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--success-600)' }}>All Systems Operational</span>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--success-600)' }}>All Enterprise Systems Operational</span>
           </div>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            IT Response Time: &lt;2 hours · Helpdesk: Mon–Fri 8AM–6PM
+            Bedrock RAG Active · Helpdesk: Mon–Fri 8AM–6PM
           </span>
         </div>
       </div>

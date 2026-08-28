@@ -21,3 +21,15 @@ variable "reminder_table_name" {
   type        = string
   default     = "employee_reminders"
 }
+
+variable "bedrock_model_id" {
+  description = "Foundation model ID for Bedrock generation"
+  type        = string
+  default     = "amazon.nova-micro-v1:0"
+}
+
+variable "bedrock_embedding_model_arn" {
+  description = "Embedding model ARN for Bedrock Knowledge Base"
+  type        = string
+  default     = "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
+}

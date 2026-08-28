@@ -29,8 +29,9 @@ export async function handleChat(event) {
   const userIdError = validateUserId(body.userId);
   if (userIdError) return badRequest(userIdError);
 
-  const message = body.message.trim();
-  const userId  = body.userId.trim();
+  const message   = body.message.trim();
+  const userId    = body.userId.trim();
+  const confirmed = body.confirmed === true;
 
   try {
     // ── Load recent conversation history ──────────────────────────────────
@@ -39,7 +40,7 @@ export async function handleChat(event) {
     // ── Run agent (intent → tools → Bedrock KB → generation) ─────────────
     let agentResult;
     try {
-      agentResult = await runAgent({ message, userId, history });
+      agentResult = await runAgent({ message, userId, confirmed, history });
     } catch (agentErr) {
       console.error('[chat] Agent error:', agentErr.message);
       const msg = agentErr.message?.includes('generation')

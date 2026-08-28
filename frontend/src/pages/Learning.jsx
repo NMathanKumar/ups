@@ -1,5 +1,9 @@
+import { useState, useEffect, useCallback } from 'react'
 import Icon from '../components/Icon'
+import { fetchTasks } from '../services/api'
 import { mockLearning } from '../services/mockData'
+
+const USER_ID = 'EMP001'
 
 const STATUS_STYLES = {
   'completed':   { badge: 'badge-success', label: 'Completed' },
@@ -8,7 +12,6 @@ const STATUS_STYLES = {
 }
 
 function ProgressBar({ pct }) {
-  const cls = pct === 100 ? 'success' : pct < 50 ? 'warning' : ''
   return (
     <div className="progress-track">
       <div className="progress-fill" style={{ width: `${pct}%` }} />
@@ -17,9 +20,52 @@ function ProgressBar({ pct }) {
 }
 
 export default function Learning() {
-  const required = mockLearning.filter(l => l.category === 'Required')
-  const elective = mockLearning.filter(l => l.category === 'Elective')
-  const avgProgress = Math.round(required.reduce((a, b) => a + b.progress, 0) / required.length)
+  const [courses, setCourses] = useState(mockLearning)
+  const [loading, setLoading] = useState(true)
+
+  const loadLearningData = useCallback(async () => {
+    setLoading(true)
+    const tasks = await fetchTasks(USER_ID)
+    const learningTasks = tasks.filter(t => t.category === 'LEARNING' || t.category === 'ONBOARDING')
+
+    if (learningTasks && learningTasks.length > 0) {
+      const dynamicCourses = learningTasks.map((t, idx) => ({
+        id: t.taskId || `course-${idx}`,
+        title: t.title,
+        category: 'Required',
+        status: t.completed ? 'completed' : 'in-progress',
+        progress: t.completed ? 100 : 25,
+        deadline: t.dueDate || 'Assigned via Onboarding',
+      }))
+
+      setCourses(prev => {
+        const merged = [...dynamicCourses]
+        prev.forEach(p => {
+          if (!merged.some(m => m.title.toLowerCase() === p.title.toLowerCase())) {
+            merged.push(p)
+          }
+        })
+        return merged
+      })
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadLearningData()
+
+    const handleUpdate = () => {
+      loadLearningData()
+    }
+    window.addEventListener('workpilot-data-updated', handleUpdate)
+    return () => window.removeEventListener('workpilot-data-updated', handleUpdate)
+  }, [loadLearningData])
+
+  const required = courses.filter(c => c.category === 'Required' || c.category === 'LEARNING')
+  const elective = courses.filter(c => c.category === 'Elective')
+  const avgProgress = required.length > 0
+    ? Math.round(required.reduce((a, b) => a + b.progress, 0) / required.length)
+    : 0
 
   return (
     <div>
@@ -29,12 +75,8 @@ export default function Learning() {
           <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
             Learning
           </h1>
-          <p className="text-secondary">Track and complete your training courses</p>
+          <p className="text-secondary">Track and complete your assigned training & onboarding courses</p>
         </div>
-        <button className="btn btn-primary" id="learning-browse-btn">
-          <Icon name="book" size={15} />
-          Browse Courses
-        </button>
       </div>
 
       {/* Overall Progress Card */}
@@ -65,42 +107,37 @@ export default function Learning() {
 
       {/* Required Training */}
       <h2 className="section-title">Required Training</h2>
-      <div className="grid-2 mb-6">
-        {required.map(course => {
-          const st = STATUS_STYLES[course.status]
-          return (
-            <div key={course.id} className="learning-card">
-              <div className="learning-card-header">
-                <div>
-                  <div className="learning-card-title">{course.title}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 2 }}>{course.deadline}</div>
+      {loading ? (
+        <p style={{ color: 'var(--text-tertiary)', marginBottom: 20 }}>Loading training data...</p>
+      ) : (
+        <div className="grid-2 mb-6">
+          {required.map(course => {
+            const st = STATUS_STYLES[course.status] || STATUS_STYLES['in-progress']
+            return (
+              <div key={course.id} className="learning-card">
+                <div className="learning-card-header">
+                  <div>
+                    <div className="learning-card-title">{course.title}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: 2 }}>{course.deadline}</div>
+                  </div>
+                  <span className={`badge ${st.badge}`}>{st.label}</span>
                 </div>
-                <span className={`badge ${st.badge}`}>{st.label}</span>
+                <div className="learning-progress-row">
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Progress</span>
+                  <span className="learning-pct">{course.progress}%</span>
+                </div>
+                <ProgressBar pct={course.progress} />
               </div>
-              <div className="learning-progress-row">
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Progress</span>
-                <span className="learning-pct">{course.progress}%</span>
-              </div>
-              <ProgressBar pct={course.progress} />
-              {course.status !== 'completed' && (
-                <button
-                  className="btn btn-primary btn-sm"
-                  style={{ marginTop: 12, width: '100%' }}
-                  id={`course-start-${course.id}`}
-                >
-                  {course.progress > 0 ? 'Continue Course' : 'Start Course'}
-                </button>
-              )}
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Elective Courses */}
       <h2 className="section-title">Elective Courses</h2>
       <div className="grid-2">
         {elective.map(course => {
-          const st = STATUS_STYLES[course.status]
+          const st = STATUS_STYLES[course.status] || STATUS_STYLES['not-started']
           return (
             <div key={course.id} className="learning-card">
               <div className="learning-card-header">
@@ -115,13 +152,6 @@ export default function Learning() {
                 <span className="learning-pct">{course.progress}%</span>
               </div>
               <ProgressBar pct={course.progress} />
-              <button
-                className="btn btn-secondary btn-sm"
-                style={{ marginTop: 12, width: '100%' }}
-                id={`course-explore-${course.id}`}
-              >
-                {course.progress > 0 ? 'Continue' : 'Explore'}
-              </button>
             </div>
           )
         })}

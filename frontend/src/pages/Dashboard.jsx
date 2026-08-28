@@ -1,18 +1,97 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import StatCard from '../components/StatCard'
 import TaskCard from '../components/TaskCard'
 import EnterpriseSystemCard from '../components/EnterpriseSystemCard'
 import Icon from '../components/Icon'
-import { mockStats, mockPriorities, mockSystems } from '../services/mockData'
+import { fetchTasks, updateTaskStatus, fetchReminders, createReminder, updateReminderStatus } from '../services/api'
+import { mockSystems } from '../services/mockData'
+
+const USER_ID = 'EMP001'
 
 export default function Dashboard({ onNavigate }) {
-  const [priorities, setPriorities] = useState(mockPriorities)
+  const [priorities, setPriorities] = useState([])
+  const [reminders, setReminders] = useState([])
+  const [newReminderInput, setNewReminderInput] = useState('')
+  const [taskStats, setTaskStats] = useState({ total: 0, pending: 0, completed: 0 })
   const [heroQuery, setHeroQuery] = useState('')
 
-  const handleToggle = (id) => {
+  const loadDashboardData = useCallback(async () => {
+    const [tasks, rems] = await Promise.all([
+      fetchTasks(USER_ID),
+      fetchReminders(USER_ID),
+    ])
+
+    if (tasks && tasks.length > 0) {
+      const pending = tasks.filter(t => !t.completed).length
+      const completed = tasks.filter(t => t.completed).length
+      setTaskStats({ total: tasks.length, pending, completed })
+
+      const top = tasks.slice(0, 4).map(t => ({
+        id: t.taskId,
+        title: t.title,
+        category: t.category || 'HR',
+        checked: t.completed ?? false,
+        dueDate: t.dueDate || 'Today',
+      }))
+      setPriorities(top)
+    } else {
+      setTaskStats({ total: 4, pending: 3, completed: 1 })
+    }
+
+    if (rems) {
+      setReminders(rems)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadDashboardData()
+
+    const handleUpdate = () => {
+      loadDashboardData()
+    }
+    window.addEventListener('workpilot-data-updated', handleUpdate)
+    return () => window.removeEventListener('workpilot-data-updated', handleUpdate)
+  }, [loadDashboardData])
+
+  const handleToggleTask = async (id) => {
+    const target = priorities.find(t => t.id === id)
+    if (!target) return
+
+    const newStatus = !target.checked
     setPriorities(prev =>
-      prev.map(t => t.id === id ? { ...t, checked: !t.checked } : t)
+      prev.map(t => t.id === id ? { ...t, checked: newStatus } : t)
     )
+
+    await updateTaskStatus(id, USER_ID, newStatus)
+    loadDashboardData()
+  }
+
+  const handleToggleReminder = async (reminderId, currentStatus) => {
+    const newStatus = !currentStatus
+    setReminders(prev =>
+      prev.map(r => r.reminder_id === reminderId ? { ...r, completed: newStatus } : r)
+    )
+    await updateReminderStatus(reminderId, USER_ID, newStatus)
+    loadDashboardData()
+  }
+
+  const handleAddReminder = async (e) => {
+    e.preventDefault()
+    if (!newReminderInput.trim()) return
+
+    const text = newReminderInput.trim()
+    setNewReminderInput('')
+
+    const tempRem = {
+      reminder_id: `rem-temp-${Date.now()}`,
+      text,
+      completed: false,
+      createdAt: new Date().toISOString(),
+    }
+    setReminders(prev => [tempRem, ...prev])
+
+    await createReminder({ userId: USER_ID, text })
+    loadDashboardData()
   }
 
   const handleHeroSubmit = (e) => {
@@ -22,26 +101,31 @@ export default function Dashboard({ onNavigate }) {
     }
   }
 
-  const handleQuickAction = (action) => {
-    onNavigate('assistant')
-  }
-
   const getHour = () => new Date().getHours()
   const greeting = getHour() < 12 ? 'Good morning' : getHour() < 17 ? 'Good afternoon' : 'Good evening'
+
+  const activeReminders = reminders.filter(r => !r.completed)
+
+  const statsList = [
+    { id: '1', title: 'Pending Tasks', value: taskStats.pending, label: 'Action required', change: 'Updated', changeType: 'neutral', icon: 'zap', color: 'var(--brand-500)', bg: 'var(--brand-50)' },
+    { id: '2', title: 'Completed Tasks', value: taskStats.completed, label: 'Fulfilled', change: 'Live', changeType: 'positive', icon: 'check', color: 'var(--success-500)', bg: 'var(--success-50)' },
+    { id: '3', title: 'Active Reminders', value: activeReminders.length, label: 'Scheduled', change: 'DynamoDB', changeType: 'neutral', icon: 'calendar', color: 'var(--warning-500)', bg: 'var(--warning-50)' },
+    { id: '4', title: 'Enterprise Status', value: 'Operational', label: 'RAG & DynamoDB', change: '100% Online', changeType: 'positive', icon: 'shield', color: 'var(--success-600)', bg: 'var(--success-50)' },
+  ]
 
   return (
     <div>
       {/* Hero Search Bar */}
       <div className="hero-search" role="search">
-        <h1 className="hero-greeting">{greeting}, Alex 👋</h1>
-        <p className="hero-subtitle">Your intelligent workplace assistant</p>
+        <h1 className="hero-greeting">{greeting}, Priya 👋</h1>
+        <p className="hero-subtitle">Your intelligent enterprise assistant powered by Bedrock RAG & DynamoDB</p>
 
         <form className="hero-input-row" onSubmit={handleHeroSubmit}>
           <input
             id="dashboard-search"
             className="hero-input"
             type="text"
-            placeholder="Ask anything about your workplace..."
+            placeholder="Ask anything about your workplace, leave balances, or onboarding..."
             value={heroQuery}
             onChange={e => setHeroQuery(e.target.value)}
             aria-label="Ask WorkPilot AI a question"
@@ -62,7 +146,7 @@ export default function Dashboard({ onNavigate }) {
             <button
               key={a.label}
               className="hero-quick-btn"
-              onClick={() => handleQuickAction(a.label)}
+              onClick={() => onNavigate('assistant')}
               id={`quick-action-${a.label.toLowerCase().replace(' ', '-')}`}
               role="listitem"
             >
@@ -75,14 +159,13 @@ export default function Dashboard({ onNavigate }) {
 
       {/* Stats Row */}
       <div className="grid-4 mb-6">
-        {mockStats.map(stat => (
+        {statsList.map(stat => (
           <StatCard key={stat.id} {...stat} />
         ))}
       </div>
 
       {/* Main Content Grid */}
       <div className="grid-2 gap-4" style={{ alignItems: 'start' }}>
-
         {/* Today's Priorities */}
         <div className="card">
           <div className="card-header">
@@ -97,55 +180,89 @@ export default function Dashboard({ onNavigate }) {
             </button>
           </div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 8 }} role="list" aria-label="Today's priorities">
-            {priorities.map(task => (
-              <TaskCard key={task.id} task={task} onToggle={handleToggle} />
-            ))}
+            {priorities.length === 0 ? (
+              <p style={{ color: 'var(--text-tertiary)', textAlign: 'center', padding: 20 }}>No pending tasks recorded.</p>
+            ) : (
+              priorities.map(task => (
+                <TaskCard key={task.id} task={task} onToggle={handleToggleTask} />
+              ))
+            )}
           </div>
         </div>
 
-        {/* Enterprise Systems */}
+        {/* Proactive Reminders */}
         <div className="card">
           <div className="card-header">
-            <span className="card-title">Enterprise Systems</span>
-            <span className="badge badge-success">All Online</span>
+            <span className="card-title">Proactive Reminders</span>
+            <span className="badge badge-brand">DynamoDB</span>
           </div>
-          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 8 }} role="list" aria-label="Enterprise systems">
-            {mockSystems.map(sys => (
-              <EnterpriseSystemCard key={sys.id} system={sys} />
-            ))}
+          <div className="card-body">
+            {/* Quick Add Form */}
+            <form onSubmit={handleAddReminder} style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Add a new reminder..."
+                value={newReminderInput}
+                onChange={e => setNewReminderInput(e.target.value)}
+                style={{ fontSize: '0.8125rem', padding: '6px 10px' }}
+              />
+              <button type="submit" className="btn btn-primary btn-sm" disabled={!newReminderInput.trim()}>
+                Add
+              </button>
+            </form>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }} role="list" aria-label="Reminders">
+              {reminders.length === 0 ? (
+                <p style={{ color: 'var(--text-tertiary)', textAlign: 'center', padding: 20 }}>No active reminders.</p>
+              ) : (
+                reminders.map(rem => (
+                  <div key={rem.reminder_id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    background: rem.completed ? 'var(--gray-50)' : 'var(--warning-50)',
+                    border: `1px solid ${rem.completed ? 'var(--gray-200)' : 'var(--warning-200)'}`,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <input
+                        type="checkbox"
+                        checked={rem.completed}
+                        onChange={() => handleToggleReminder(rem.reminder_id, rem.completed)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span style={{
+                        fontSize: '0.8125rem',
+                        color: rem.completed ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                        textDecoration: rem.completed ? 'line-through' : 'none',
+                        fontWeight: 500,
+                      }}>
+                        {rem.text}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>
+                      {rem.completed ? 'Done' : 'Upcoming'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* Enterprise Systems Row */}
       <div className="card mt-4">
         <div className="card-header">
-          <span className="card-title">Quick Access</span>
+          <span className="card-title">Enterprise Systems Status</span>
+          <span className="badge badge-success">All Online</span>
         </div>
-        <div className="card-body">
-          <div className="grid-4">
-            {[
-              { label: 'WFH Policy',       icon: 'file',     color: 'var(--brand-500)',   bg: 'var(--brand-50)',   page: 'policies' },
-              { label: 'Security Training', icon: 'shield',   color: 'var(--danger-500)',  bg: 'var(--danger-50)',  page: 'learning' },
-              { label: 'Log IT Ticket',     icon: 'monitor',  color: 'var(--info-500)',    bg: 'var(--info-50)',    page: 'itsupport' },
-              { label: 'AI Assistant',      icon: 'bot',      color: 'var(--brand-600)',   bg: 'var(--brand-50)',   page: 'assistant' },
-            ].map(item => (
-              <button
-                key={item.label}
-                className="quick-action"
-                style={{ justifyContent: 'flex-start', padding: '12px 14px', borderRadius: 'var(--radius-md)', width: '100%' }}
-                onClick={() => onNavigate(item.page)}
-                id={`quick-access-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                <div style={{ width: 32, height: 32, borderRadius: 'var(--radius-sm)', background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ color: item.color }}>
-                    <Icon name={item.icon} size={16} />
-                  </span>
-                </div>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>{item.label}</span>
-              </button>
-            ))}
-          </div>
+        <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {mockSystems.map(sys => (
+            <EnterpriseSystemCard key={sys.id} system={sys} />
+          ))}
         </div>
       </div>
     </div>

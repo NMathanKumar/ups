@@ -53,18 +53,28 @@ Employee Question: ${question}
 
 Answer:`;
 
-  // Build the messages array for the Claude Messages API
-  const messages = [
-    { role: 'user', content: userPrompt },
-  ];
+  const modelId = config.bedrockModelId ?? '';
+  const isNova  = modelId.includes('nova');
 
-  const requestBody = JSON.stringify({
-    anthropic_version: 'bedrock-2023-05-31',
-    system: SYSTEM_PROMPT,
-    messages,
-    max_tokens: 1024,
-    temperature: 0.1, // low temperature = more grounded, less creative
-  });
+  let requestBody;
+  if (isNova) {
+    requestBody = JSON.stringify({
+      system: [{ text: SYSTEM_PROMPT }],
+      messages: [{ role: 'user', content: [{ text: userPrompt }] }],
+      inferenceConfig: {
+        maxTokens: 1024,
+        temperature: 0.1,
+      },
+    });
+  } else {
+    requestBody = JSON.stringify({
+      anthropic_version: 'bedrock-2023-05-31',
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }],
+      max_tokens: 1024,
+      temperature: 0.1,
+    });
+  }
 
   const command = new InvokeModelCommand({
     modelId: config.bedrockModelId,
@@ -76,8 +86,10 @@ Answer:`;
   const response = await getClient().send(command);
   const responseBody = JSON.parse(Buffer.from(response.body).toString('utf-8'));
 
-  // Claude response format: content[0].text
-  const answer = responseBody?.content?.[0]?.text ?? '';
+  const answer = isNova
+    ? responseBody?.output?.message?.content?.[0]?.text ?? ''
+    : responseBody?.content?.[0]?.text ?? '';
+
   if (!answer) {
     throw new Error('Bedrock returned an empty response body.');
   }

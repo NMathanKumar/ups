@@ -10,7 +10,7 @@ import { corsPreflightResponse, badRequest } from './utils/response.js';
 import { handleHealth }           from './handlers/health.js';
 import { handleChat }             from './handlers/chat.js';
 import { handleGetTasks, handleCreateTask, handleUpdateTask } from './handlers/tasks.js';
-import { handleGetReminders, handleCreateReminder }          from './handlers/reminders.js';
+import { handleGetReminders, handleCreateReminder, handleUpdateReminder }          from './handlers/reminders.js';
 import { handleGetConversations } from './handlers/conversations.js';
 
 export const handler = async (event) => {
@@ -43,6 +43,10 @@ export const handler = async (event) => {
   // ── Reminders ────────────────────────────────────────────────────────────
   if (method === 'GET'  && path === '/api/reminders') return handleGetReminders(event);
   if (method === 'POST' && path === '/api/reminders') return handleCreateReminder(event);
+  if (method === 'PATCH' && path.startsWith('/api/reminders/')) {
+    const reminderId = path.split('/api/reminders/')[1];
+    return handleUpdateReminder({ ...event, pathParameters: { reminderId } });
+  }
 
   // ── 404 ──────────────────────────────────────────────────────────────────
   return badRequest(`Route not found: ${method} ${path}`);

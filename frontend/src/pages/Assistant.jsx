@@ -13,7 +13,7 @@ const EXAMPLE_PROMPTS = [
   { key: 'vpn',      text: "My VPN isn't working.",                icon: 'wifi' },
 ]
 
-const USER_ID = 'demo-user' // Configurable in a real auth implementation
+const USER_ID = 'EMP001' // Configurable in a real auth implementation
 
 function getTime() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -40,24 +40,34 @@ export default function Assistant() {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
-  const sendMessage = useCallback(async (text) => {
+  const sendMessage = useCallback(async (text, confirmed = false, originalPrompt = null) => {
     if (!text.trim()) return
-    const userMsg = { id: Date.now(), role: 'user', content: text, time: getTime() }
-    setMessages(prev => [...prev, userMsg])
+    const queryText = originalPrompt || text
+    if (!confirmed) {
+      const userMsg = { id: Date.now(), role: 'user', content: queryText, time: getTime() }
+      setMessages(prev => [...prev, userMsg])
+    }
     setInput('')
     setIsTyping(true)
 
     try {
-      const result = await queryAssistant(text, USER_ID)
+      const result = await queryAssistant(queryText, USER_ID, confirmed)
       const aiMsg = {
         id: Date.now() + 1,
         role: 'ai',
         content: result.answer,
         time: getTime(),
+        status: result.status,
+        requiresConfirmation: result.requiresConfirmation,
+        queryText: queryText,
       }
       setMessages(prev => [...prev, aiMsg])
 
-      // Build source + action extras for the SourceCard / ActionCard components
+      // If a write operation was executed and completed, notify other components to refresh
+      if (confirmed && result.status === 'COMPLETED') {
+        window.dispatchEvent(new CustomEvent('workpilot-data-updated'))
+      }
+
       if (result.sources && result.sources.length > 0) {
         const primarySource = result.sources[0]
         setExtras(prev => [...prev, {
@@ -66,7 +76,7 @@ export default function Assistant() {
             fileName: primarySource.document,
             system:   primarySource.category ?? result.category ?? 'Enterprise KB',
           },
-          action: null, // Action cards are surfaced when the AI response suggests an action
+          action: null,
         }])
       }
     } catch (err) {
@@ -83,6 +93,21 @@ export default function Assistant() {
       setIsTyping(false)
     }
   }, [])
+
+  const handleConfirmAction = (msg) => {
+    addToast('✓ Confirmation received. Executing workflow...', 'info')
+    sendMessage(msg.queryText, true)
+  }
+
+  const handleCancelAction = (msg) => {
+    addToast('Action cancelled', 'info')
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      role: 'ai',
+      content: '❌ Action request was cancelled. No changes were made to DynamoDB.',
+      time: getTime(),
+    }])
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -153,6 +178,27 @@ export default function Assistant() {
                 return (
                   <div key={msg.id}>
                     <ChatMessage message={msg} />
+                    {(msg.requiresConfirmation || msg.status === 'CONFIRMATION_REQUIRED') && (
+                      <div style={{ marginTop: 12, marginLeft: 44, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => handleConfirmAction(msg)}
+                          disabled={isTyping}
+                          id={`confirm-action-btn-${msg.id}`}
+                        >
+                          <Icon name="check" size={15} />
+                          Confirm &amp; Execute Workflow
+                        </button>
+                        <button
+                          className="btn btn-ghost"
+                          onClick={() => handleCancelAction(msg)}
+                          disabled={isTyping}
+                          id={`cancel-action-btn-${msg.id}`}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
                     {extra && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                         <SourceCard source={extra.source} />

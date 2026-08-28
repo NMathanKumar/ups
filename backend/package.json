@@ -6,7 +6,9 @@
   "main": "src/router.js",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
-    "dev": "node src/router.js"
+    "dev": "node src/router.js",
+    "seed": "node scripts/seedEnterpriseData.js",
+    "package": "node scripts/package.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-agent-runtime": "^3.600.0",

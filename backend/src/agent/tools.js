@@ -19,6 +19,14 @@ import {
   getEmployeeAssets,
   findAvailableResources,
 } from '../services/enterpriseSystems.js';
+import {
+  createLeaveRequest as dbCreateLeaveRequest,
+  createHRTask       as dbCreateHRTask,
+  createITTicket     as dbCreateITTicket,
+  createOnboardingWorkflow,
+  createTaskRecord,
+  getOnboardingStatus,
+} from '../services/workflowService.js';
 
 export const TOOL_METADATA = {
   searchPolicy: {
@@ -50,6 +58,12 @@ export const TOOL_METADATA = {
     type: 'READ',
     requiresConfirmation: false,
     description: 'Finds available staff/resources matching skill or department criteria',
+  },
+  getOnboardingStatus: {
+    name: 'getOnboardingStatus',
+    type: 'READ',
+    requiresConfirmation: false,
+    description: 'Retrieves current onboarding workflow status and pending/completed tasks for an employee',
   },
   createLeaveRequest: {
     name: 'createLeaveRequest',
@@ -138,27 +152,120 @@ export async function executeTool(toolName, params = {}) {
     }
 
     case 'getEmployee': {
-      const res = getEmployee(params.employeeId ?? params.userId);
+      const res = await getEmployee(params.employeeId ?? params.userId);
       return { ...res, tool: toolName };
     }
 
     case 'checkLeaveBalance': {
-      const res = checkLeaveBalance(params.employeeId ?? params.userId);
+      const res = await checkLeaveBalance(params.employeeId ?? params.userId);
       return { ...res, tool: toolName };
     }
 
     case 'getEmployeeAssets': {
-      const res = getEmployeeAssets(params.employeeId ?? params.userId);
+      const res = await getEmployeeAssets(params.employeeId ?? params.userId);
       return { ...res, tool: toolName };
     }
 
     case 'findAvailableResources': {
-      const res = findAvailableResources(params.criteria ?? {});
+      const res = await findAvailableResources(params.criteria ?? {});
       return { ...res, tool: toolName };
     }
 
-    // All other enterprise operational tools: stubs.
-    // IMPORTANT: Never return fake success.
+    case 'getOnboardingStatus': {
+      const targetEmp = params.employeeId ?? params.userId;
+      const res = await getOnboardingStatus({ userId: targetEmp, employeeId: targetEmp });
+      return { ...res, tool: toolName };
+    }
+
+    case 'createLeaveRequest': {
+      const { userId, startDate, endDate, durationDays } = params;
+      if (!startDate || !endDate) {
+        return { success: false, status: 'FAILED', tool: toolName, data: null, error: 'startDate and endDate are required.' };
+      }
+      const res = await dbCreateLeaveRequest({ userId, startDate, endDate, durationDays });
+      return { ...res, tool: toolName };
+    }
+
+    case 'createHRTask': {
+      const { userId, workflowId, title, dueDate } = params;
+      if (!userId || !title) {
+        return { success: false, status: 'FAILED', tool: toolName, data: null, error: 'userId and title are required.' };
+      }
+      const res = await dbCreateHRTask({ userId, workflowId, title, dueDate });
+      return { ...res, tool: toolName };
+    }
+
+    case 'createITTicket': {
+      const { userId, workflowId, assets } = params;
+      if (!userId || !assets || assets.length === 0) {
+        // No assets → skip IT ticket (not an error)
+        return { success: true, status: 'SKIPPED', tool: toolName, data: null, error: null };
+      }
+      const res = await dbCreateITTicket({ userId, workflowId, assets });
+      return { ...res, tool: toolName };
+    }
+
+    case 'createOnboarding': {
+      const { userId, employeeId, role, startDate } = params;
+      const targetEmp = employeeId ?? userId;
+
+      const empRes = await getEmployee(targetEmp);
+      const empName = empRes.success && empRes.data ? empRes.data.name : targetEmp;
+
+      const wfRes = await createOnboardingWorkflow({
+        userId: targetEmp,
+        employeeName: empName,
+        role: role || 'Software Engineering Intern',
+        startDate: startDate || new Date().toISOString().split('T')[0],
+      });
+
+      if (!wfRes.success) return { ...wfRes, tool: toolName };
+
+      const workflowId = wfRes.data.workflowId;
+
+      const t1 = await createTaskRecord({
+        userId: targetEmp,
+        workflowId,
+        title: `Complete HR tax & direct deposit forms in HR Portal`,
+        category: 'HR',
+      });
+      const t2 = await createTaskRecord({
+        userId: targetEmp,
+        workflowId,
+        title: `Set up SSO password, Duo MFA & IT laptop provisioning`,
+        category: 'IT',
+      });
+      const t3 = await createTaskRecord({
+        userId: targetEmp,
+        workflowId,
+        title: `Complete mandatory Security Awareness Training`,
+        category: 'LEARNING',
+      });
+
+      const tasksCreated = [t1.data, t2.data, t3.data].filter(Boolean);
+
+      return {
+        success: true,
+        status: 'SUCCESS',
+        tool: toolName,
+        data: {
+          workflow: wfRes.data,
+          tasksCreated,
+        },
+        error: null,
+      };
+    }
+
+    case 'createTask': {
+      const { userId, title, category, dueDate } = params;
+      if (!userId || !title) {
+        return { success: false, status: 'FAILED', tool: toolName, data: null, error: 'userId and title are required.' };
+      }
+      const res = await createTaskRecord({ userId, title, category: category || 'GENERAL', dueDate });
+      return { ...res, tool: toolName };
+    }
+
+    // Remaining WRITE tools — not yet implemented
     default:
       return {
         success: false,

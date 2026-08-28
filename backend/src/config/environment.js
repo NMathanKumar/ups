@@ -35,9 +35,15 @@ export function getConfig() {
       tasksTableName:         require_env('TASKS_TABLE_NAME'),
       remindersTableName:     require_env('REMINDERS_TABLE_NAME'),
       conversationsTableName: require_env('CONVERSATIONS_TABLE_NAME'),
+      workflowsTableName:     require_env('WORKFLOWS_TABLE_NAME'),
+      // Enterprise structured data tables (Step 13)
+      employeesTableName:     require_env('EMPLOYEES_TABLE_NAME'),
+      leaveBalancesTableName: require_env('LEAVE_BALANCES_TABLE_NAME'),
+      assetsTableName:        require_env('ASSETS_TABLE_NAME'),
+      projectsTableName:      require_env('PROJECTS_TABLE_NAME'),
       frontendOrigin:         optional_env('FRONTEND_ORIGIN', 'http://localhost:5173'),
       bedrockRelevanceThreshold: parseFloat(
-        optional_env('BEDROCK_RELEVANCE_THRESHOLD', '0.4')
+        optional_env('BEDROCK_RELEVANCE_THRESHOLD', '0.2')
       ),
       conversationWindowSize: parseInt(optional_env('CONVERSATION_WINDOW_SIZE', '10'), 10),
     };

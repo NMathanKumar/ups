@@ -12,6 +12,7 @@ import {
   QueryCommand,
   UpdateCommand,
   DeleteCommand,
+  ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { config } from '../config/environment.js';
 
@@ -70,4 +71,13 @@ export async function updateItem(tableName, key, updateExpression, expressionAtt
 
 export async function deleteItem(tableName, key) {
   await getDocClient().send(new DeleteCommand({ TableName: tableName, Key: key }));
+}
+
+/**
+ * Full table scan — use only for small demo tables.
+ * For production, replace with Query or a proper index.
+ */
+export async function scanItems(tableName) {
+  const result = await getDocClient().send(new ScanCommand({ TableName: tableName }));
+  return result.Items ?? [];
 }
