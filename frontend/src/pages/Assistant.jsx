@@ -19,13 +19,15 @@ function getTime() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-export default function Assistant() {
+export default function Assistant({ currentUser }) {
   const [messages, setMessages] = useState([])
   const [extras, setExtras]     = useState([])
   const [input, setInput]       = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [toasts, setToasts]     = useState([])
   const messagesEndRef = useRef(null)
+
+  const empId = currentUser?.employee_id || 'EMP001'
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -51,7 +53,7 @@ export default function Assistant() {
     setIsTyping(true)
 
     try {
-      const result = await queryAssistant(queryText, USER_ID, confirmed)
+      const result = await queryAssistant(queryText, empId, confirmed)
       const aiMsg = {
         id: Date.now() + 1,
         role: 'ai',
@@ -63,7 +65,6 @@ export default function Assistant() {
       }
       setMessages(prev => [...prev, aiMsg])
 
-      // If a write operation was executed and completed, notify other components to refresh
       if (confirmed && result.status === 'COMPLETED') {
         window.dispatchEvent(new CustomEvent('workpilot-data-updated'))
       }
@@ -92,7 +93,7 @@ export default function Assistant() {
     } finally {
       setIsTyping(false)
     }
-  }, [])
+  }, [empId])
 
   const handleConfirmAction = (msg) => {
     addToast('✓ Confirmation received. Executing workflow...', 'info')
@@ -136,10 +137,10 @@ export default function Assistant() {
       {/* Page Header */}
       <div className="mb-4">
         <h1 style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-          AI Assistant
+          AI Assistant Workspace
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
-          One place to get answers and take action.
+          Real-time company knowledge base grounded by Amazon Bedrock &amp; OpenSearch
         </p>
       </div>
 
@@ -149,11 +150,11 @@ export default function Assistant() {
         <div className="chat-messages" role="log" aria-label="Chat messages" aria-live="polite">
           {isEmpty ? (
             <div className="chat-welcome">
-              <div className="chat-welcome-icon" aria-hidden="true">
-                <Icon name="zap" size={32} />
+              <div className="chat-welcome-icon" aria-hidden="true" style={{ background: 'linear-gradient(135deg, #ff9900 0%, #ec7211 100%)', boxShadow: '0 8px 24px rgba(255, 153, 0, 0.4)' }}>
+                <Icon name="zap" size={32} style={{ color: '#ffffff' }} />
               </div>
-              <h2>How can I help you today?</h2>
-              <p>
+              <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: '#0f172a' }}>How can I help you today?</h2>
+              <p style={{ color: '#64748b', fontSize: '0.9375rem', marginBottom: 28 }}>
                 Ask me anything about company policies, HR, learning, IT support, or your onboarding journey.
               </p>
               <div className="example-prompts" role="list" aria-label="Example questions">
@@ -164,8 +165,9 @@ export default function Assistant() {
                     onClick={() => handlePromptClick(prompt)}
                     id={`example-prompt-${prompt.key}`}
                     role="listitem"
+                    style={{ borderRadius: 12, border: '1px solid #e2e8f0', padding: '12px 16px' }}
                   >
-                    <Icon name={prompt.icon} size={15} />
+                    <Icon name={prompt.icon} size={15} style={{ color: '#ff9900' }} />
                     {prompt.text}
                   </button>
                 ))}
@@ -177,7 +179,7 @@ export default function Assistant() {
                 const extra = extras.find(e => e.id === msg.id)
                 return (
                   <div key={msg.id}>
-                    <ChatMessage message={msg} />
+                    <ChatMessage message={msg} currentUser={currentUser} />
                     {(msg.requiresConfirmation || msg.status === 'CONFIRMATION_REQUIRED') && (
                       <div style={{ marginTop: 12, marginLeft: 44, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         <button
@@ -185,6 +187,7 @@ export default function Assistant() {
                           onClick={() => handleConfirmAction(msg)}
                           disabled={isTyping}
                           id={`confirm-action-btn-${msg.id}`}
+                          style={{ background: 'linear-gradient(135deg, #ff9900 0%, #ec7211 100%)', color: '#ffffff', border: 'none', fontWeight: 700 }}
                         >
                           <Icon name="check" size={15} />
                           Confirm &amp; Execute Workflow
@@ -216,11 +219,11 @@ export default function Assistant() {
 
               {isTyping && (
                 <div className="message-row ai">
-                  <div className="message-avatar ai-avatar" aria-hidden="true">⚡</div>
+                  <div className="message-avatar ai-avatar" aria-hidden="true" style={{ background: 'linear-gradient(135deg, #232f3e, #131921)', color: '#ff9900', border: '1.5px solid #ff9900' }}>⚡</div>
                   <div className="message-bubble ai-bubble typing-indicator" role="status" aria-label="WorkPilot AI is typing">
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
+                    <span className="typing-dot" style={{ background: '#ff9900' }} />
+                    <span className="typing-dot" style={{ background: '#ff9900' }} />
+                    <span className="typing-dot" style={{ background: '#ff9900' }} />
                   </div>
                 </div>
               )}
@@ -237,7 +240,7 @@ export default function Assistant() {
                 <button
                   key={p.key}
                   className="quick-action"
-                  style={{ fontSize: '0.75rem', padding: '4px 10px' }}
+                  style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: 999, border: '1px solid #e2e8f0' }}
                   onClick={() => handlePromptClick(p)}
                 >
                   {p.text}
@@ -256,6 +259,7 @@ export default function Assistant() {
               rows={1}
               aria-label="Message input"
               disabled={isTyping}
+              style={{ borderRadius: 12, border: '1.5px solid #cbd5e1' }}
             />
             <button
               type="submit"
@@ -263,12 +267,13 @@ export default function Assistant() {
               disabled={!input.trim() || isTyping}
               id="chat-send-btn"
               aria-label="Send message"
+              style={{ background: 'linear-gradient(135deg, #ff9900 0%, #ec7211 100%)', color: '#ffffff', borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(255, 153, 0, 0.35)' }}
             >
               <Icon name="send" size={18} />
             </button>
           </form>
-          <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', marginTop: 8, textAlign: 'center' }}>
-            WorkPilot AI uses company knowledge base only. Responses are grounded in verified company documents.
+          <p style={{ fontSize: '0.6875rem', color: '#94a3b8', marginTop: 8, textAlign: 'center' }}>
+            WorkPilot AI uses company knowledge base only. Grounded in Amazon Bedrock &amp; DynamoDB.
           </p>
         </div>
       </div>

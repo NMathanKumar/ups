@@ -8,20 +8,24 @@ import { mockSystems, mockTasks } from '../services/mockData'
 
 const USER_ID = 'EMP001'
 
-export default function Dashboard({ onNavigate }) {
+export default function Dashboard({ onNavigate, currentUser }) {
+  const userName = currentUser?.name || 'Priya Sharma'
+  const userRole = currentUser?.designation || currentUser?.title || 'Senior Product Manager'
+  const empId = currentUser?.employee_id || 'EMP001'
+
   const [priorities, setPriorities] = useState([])
   const [allTasks, setAllTasks] = useState([])
   const [reminders, setReminders] = useState([])
   const [newReminderInput, setNewReminderInput] = useState('')
   const [taskStats, setTaskStats] = useState({ total: 0, pending: 0, completed: 0 })
   const [heroQuery, setHeroQuery] = useState('')
-  const [activeModal, setActiveModal] = useState(null) // 'fulfilled' | 'systemStatus' | 'quickTask' | null
-  const [taskFilter, setTaskFilter] = useState('all') // 'all' | 'HR' | 'IT' | 'urgent'
+  const [activeModal, setActiveModal] = useState(null)
+  const [taskFilter, setTaskFilter] = useState('all')
   const [lastSynced, setLastSynced] = useState(new Date().toLocaleTimeString())
   const [isSyncing, setIsSyncing] = useState(false)
   const [activityLogs, setActivityLogs] = useState([
     { id: 1, text: 'Bedrock Knowledge Base RAG indexed 14 enterprise policy documents', time: 'Just now', type: 'system' },
-    { id: 2, text: 'DynamoDB task table synchronized for user EMP001', time: '2m ago', type: 'task' },
+    { id: 2, text: `DynamoDB task table synchronized for user ${empId}`, time: '2m ago', type: 'task' },
     { id: 3, text: 'Maternity leave & benefits workflow initialized', time: '5m ago', type: 'hr' },
   ])
 
@@ -36,8 +40,8 @@ export default function Dashboard({ onNavigate }) {
 
     try {
       const [tasks, rems] = await Promise.all([
-        fetchTasks(USER_ID),
-        fetchReminders(USER_ID),
+        fetchTasks(empId),
+        fetchReminders(empId),
       ])
 
       let combined = []
@@ -87,7 +91,7 @@ export default function Dashboard({ onNavigate }) {
     } finally {
       if (isManual) setTimeout(() => setIsSyncing(false), 500)
     }
-  }, [])
+  }, [empId])
 
   useEffect(() => {
     loadDashboardData()
@@ -108,7 +112,6 @@ export default function Dashboard({ onNavigate }) {
 
     const newStatus = !target.checked
 
-    // Persist local override immediately
     try {
       const saved = localStorage.getItem('workpilot_task_overrides')
       const overrides = saved ? JSON.parse(saved) : {}
@@ -121,7 +124,6 @@ export default function Dashboard({ onNavigate }) {
     setAllTasks(prev => prev.map(t => t.id === id ? { ...t, checked: newStatus } : t))
     setPriorities(prev => prev.map(t => t.id === id ? { ...t, checked: newStatus } : t))
 
-    // Add activity log
     const logItem = {
       id: Date.now(),
       text: `Task marked ${newStatus ? 'Completed' : 'Pending'}: "${target.title.substring(0, 35)}..."`,
@@ -130,7 +132,7 @@ export default function Dashboard({ onNavigate }) {
     }
     setActivityLogs(prev => [logItem, ...prev.slice(0, 4)])
 
-    await updateTaskStatus(id, USER_ID, newStatus, {
+    await updateTaskStatus(id, empId, newStatus, {
       title: target.title,
       category: target.category,
       dueDate: target.dueDate
@@ -143,7 +145,7 @@ export default function Dashboard({ onNavigate }) {
     setReminders(prev =>
       prev.map(r => r.reminder_id === reminderId ? { ...r, completed: newStatus } : r)
     )
-    await updateReminderStatus(reminderId, USER_ID, newStatus)
+    await updateReminderStatus(reminderId, empId, newStatus)
     window.dispatchEvent(new CustomEvent('workpilot-data-updated'))
   }
 
@@ -169,7 +171,7 @@ export default function Dashboard({ onNavigate }) {
       type: 'task'
     }, ...prev.slice(0, 4)])
 
-    await createReminder({ userId: USER_ID, text })
+    await createReminder({ userId: empId, text })
     window.dispatchEvent(new CustomEvent('workpilot-data-updated'))
   }
 
@@ -196,7 +198,6 @@ export default function Dashboard({ onNavigate }) {
   const completedTasksList = allTasks.filter(t => t.checked)
   const pendingTasksList = allTasks.filter(t => !t.checked)
 
-  // Filter tasks based on selected pill
   const filteredPriorities = pendingTasksList.filter(t => {
     if (taskFilter === 'HR') return t.category === 'HR'
     if (taskFilter === 'IT') return t.category === 'IT' || t.category === 'IT Support'
@@ -213,8 +214,8 @@ export default function Dashboard({ onNavigate }) {
       value: taskStats.pending,
       subtext: `${taskStats.pending} task${taskStats.pending !== 1 ? 's' : ''} awaiting action`,
       icon: 'zap',
-      color: 'var(--brand-600)',
-      bgColor: 'var(--brand-50)',
+      color: '#ec7211',
+      bgColor: '#fffbeb',
       actionHint: 'Go to Tasks →',
       onClick: () => {
         localStorage.setItem('workpilot_tasks_active_section', 'today')
@@ -227,8 +228,8 @@ export default function Dashboard({ onNavigate }) {
       value: `${taskStats.completed} / ${taskStats.total}`,
       subtext: `${completionPct}% completion rate`,
       icon: 'check',
-      color: 'var(--success-600)',
-      bgColor: 'var(--success-50)',
+      color: '#16a34a',
+      bgColor: '#f0fdf4',
       actionHint: 'View Completed →',
       onClick: () => {
         localStorage.setItem('workpilot_tasks_active_section', 'completed')
@@ -241,8 +242,8 @@ export default function Dashboard({ onNavigate }) {
       value: activeReminders.length,
       subtext: `${activeReminders.length} active reminder${activeReminders.length !== 1 ? 's' : ''}`,
       icon: 'calendar',
-      color: 'var(--warning-600)',
-      bgColor: 'var(--warning-50)',
+      color: '#ff9900',
+      bgColor: '#fff8e7',
       actionHint: 'Add Reminder ↓',
       onClick: handleScheduledClick
     },
@@ -252,8 +253,8 @@ export default function Dashboard({ onNavigate }) {
       value: 'Operational',
       subtext: '5 Lambdas 100% Online',
       icon: 'shield',
-      color: 'var(--success-600)',
-      bgColor: 'var(--success-50)',
+      color: '#232f3e',
+      bgColor: '#eef2f6',
       actionHint: 'System Settings ⚙',
       onClick: () => onNavigate('settings')
     },
@@ -263,8 +264,8 @@ export default function Dashboard({ onNavigate }) {
     <div className="dashboard-container space-y-6">
       {/* Top Real-time Control HUD */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3 p-3 rounded-xl" style={{
-        background: 'var(--gray-50)',
-        border: '1px solid var(--border-light)'
+        background: '#ffffff',
+        border: '1px solid #e2e8f0'
       }}>
         <div className="flex items-center gap-3">
           <span className="badge badge-success flex items-center gap-1.5" style={{ padding: '5px 12px', fontSize: '0.75rem', fontWeight: 600 }}>
@@ -279,13 +280,13 @@ export default function Dashboard({ onNavigate }) {
             }} />
             Live Enterprise APIs Connected
           </span>
-          <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
-            AWS US-East-1 • Bedrock RAG & DynamoDB active
+          <span style={{ fontSize: '0.8125rem', color: '#475569', fontWeight: 500 }}>
+            AWS US-East-1 • Bedrock RAG &amp; DynamoDB active
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
             Synced {lastSynced}
           </span>
           <button
@@ -300,27 +301,29 @@ export default function Dashboard({ onNavigate }) {
         </div>
       </div>
 
-      {/* Hero AI Search & Prompt Card */}
+      {/* Hero AI Search & Prompt Card — Amazon Squall Navy & Amber Royal */}
       <div className="hero-search" role="search" style={{
-        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%)',
+        background: 'linear-gradient(135deg, #131921 0%, #232f3e 50%, #37475a 100%)',
         borderRadius: 18,
         padding: '32px 28px',
         color: '#ffffff',
-        boxShadow: '0 12px 30px -8px rgba(49, 46, 129, 0.4)'
+        boxShadow: '0 12px 30px -8px rgba(35, 47, 62, 0.5)',
+        border: '1px solid #37475a'
       }}>
         <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
           <h1 className="hero-greeting" style={{ fontSize: '1.75rem', fontWeight: 800 }}>
-            {greeting}, Alex Morgan 👋
+            {greeting}, {userName} 👋
           </h1>
           <span style={{
-            background: 'rgba(255, 255, 255, 0.15)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(255, 153, 0, 0.2)',
+            border: '1px solid rgba(255, 153, 0, 0.4)',
+            color: '#ffac31',
             padding: '4px 12px',
             borderRadius: 20,
             fontSize: '0.75rem',
-            fontWeight: 600
+            fontWeight: 700
           }}>
-            EMP001 • Product Engineer
+            {empId} • {userRole}
           </span>
         </div>
 
@@ -337,9 +340,16 @@ export default function Dashboard({ onNavigate }) {
             value={heroQuery}
             onChange={e => setHeroQuery(e.target.value)}
             aria-label="Ask WorkPilot AI a question"
-            style={{ background: 'rgba(255, 255, 255, 0.95)', color: '#0f172a' }}
+            style={{ background: '#ffffff', color: '#0f172a', borderRadius: 10 }}
           />
-          <button type="submit" className="hero-send-btn" id="dashboard-search-submit" style={{ background: '#4f46e5', fontWeight: 600 }}>
+          <button type="submit" className="hero-send-btn" id="dashboard-search-submit" style={{
+            background: 'linear-gradient(135deg, #ff9900 0%, #ec7211 100%)',
+            color: '#ffffff',
+            fontWeight: 700,
+            borderRadius: 10,
+            border: 'none',
+            boxShadow: '0 4px 14px rgba(255, 153, 0, 0.4)'
+          }}>
             <Icon name="send" size={16} />
             Ask AI
           </button>
@@ -359,9 +369,9 @@ export default function Dashboard({ onNavigate }) {
                 setHeroQuery(a.query)
                 onNavigate('assistant')
               }}
-              style={{ background: 'rgba(255, 255, 255, 0.12)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
+              style={{ background: 'rgba(255, 255, 255, 0.12)', border: '1px solid rgba(255, 255, 255, 0.25)', color: '#ffffff' }}
             >
-              <Icon name="sparkles" size={13} />
+              <Icon name="sparkles" size={13} style={{ color: '#ff9900' }} />
               {a.label}
             </button>
           ))}

@@ -244,24 +244,24 @@ export default function Learning({ onNavigate }) {
         </div>
       </div>
 
-      {/* Hero Compliance Progress Card */}
+      {/* Hero Compliance Progress Card — Amazon Squall Navy & Gold */}
       <div className="card mb-6" style={{
-        background: 'linear-gradient(135deg, #3730a3 0%, #4f46e5 50%, #6366f1 100%)',
-        borderColor: 'transparent',
-        boxShadow: '0 10px 25px -5px rgba(79,70,229,0.3)',
+        background: 'linear-gradient(135deg, #131921 0%, #232f3e 50%, #37475a 100%)',
+        border: '1px solid #37475a',
+        boxShadow: '0 10px 25px -5px rgba(35, 47, 62, 0.4)',
         borderRadius: 16
       }}>
         <div className="card-body p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.875rem', fontWeight: 500, marginBottom: 4 }}>
-                Overall Compliance & Training Progress
+              <div style={{ color: '#ff9900', fontSize: '0.875rem', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Overall Compliance &amp; Training Progress
               </div>
               <div className="flex items-baseline gap-3">
                 <span style={{ color: 'white', fontSize: '2.5rem', fontWeight: 800, lineHeight: 1 }}>
                   {avgProgress}%
                 </span>
-                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem' }}>
+                <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.875rem' }}>
                   ({completedCount} of {required.length} Required Completed)
                 </span>
               </div>
@@ -270,12 +270,12 @@ export default function Learning({ onNavigate }) {
               width: 60,
               height: 60,
               borderRadius: '50%',
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(8px)',
+              background: 'linear-gradient(135deg, #ff9900 0%, #ec7211 100%)',
               display: 'flex',
               alignItems: 'center',
-              justify: 'center',
-              color: 'white'
+              justifyContent: 'center',
+              color: 'white',
+              boxShadow: '0 6px 16px rgba(255, 153, 0, 0.4)'
             }}>
               <Icon name="star" size={28} />
             </div>
@@ -283,9 +283,9 @@ export default function Learning({ onNavigate }) {
 
           <ProgressBar pct={avgProgress} />
 
-          <div className="flex items-center justify-between mt-4 text-xs" style={{ color: 'rgba(255,255,255,0.8)' }}>
+          <div className="flex items-center justify-between mt-4 text-xs" style={{ color: 'rgba(255,255,255,0.85)' }}>
             <span>Status: {avgProgress >= 80 ? '🟢 Compliant' : '🟡 In Progress'}</span>
-            <span>Auto-synced with AWS API Gateway</span>
+            <span style={{ color: '#ffac31', fontWeight: 600 }}>Auto-synced with AWS API Gateway</span>
           </div>
         </div>
       </div>
