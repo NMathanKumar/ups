@@ -3,7 +3,7 @@ import Icon from './Icon'
 export default function Header({ pageLabel, onToggleSidebar }) {
   return (
     <header className="page-header" role="banner">
-      <div className="header-left">
+      <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button
           className="header-hamburger"
           onClick={onToggleSidebar}
@@ -12,6 +12,13 @@ export default function Header({ pageLabel, onToggleSidebar }) {
         >
           <Icon name="menu" size={20} />
         </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <img src="/favicon.svg" alt="WorkPilot AI Logo" style={{ width: 24, height: 24 }} />
+          <span style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--brand-600)', letterSpacing: '-0.01em' }}>WorkPilot AI</span>
+        </div>
+
+        <span style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>/</span>
         <span className="header-breadcrumb">{pageLabel}</span>
       </div>
 
@@ -24,7 +31,7 @@ export default function Header({ pageLabel, onToggleSidebar }) {
           <span className="notif-dot" aria-hidden="true" />
         </button>
         <div className="header-avatar" role="button" tabIndex={0} aria-label="User menu" id="header-avatar">
-          AM
+          PS
         </div>
       </div>
     </header>
