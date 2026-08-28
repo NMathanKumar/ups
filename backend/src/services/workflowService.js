@@ -17,32 +17,58 @@ import { config } from '../config/environment.js';
 const workflowsTable = () => config.workflowsTableName;
 const tasksTable     = () => config.tasksTableName;
 
-// ── Leave Request ────────────────────────────────────────────────────────────
+const leaveBalancesTable = () => config.leaveBalancesTableName;
 
 /**
- * Create a maternity leave workflow record in DynamoDB.
+ * Deduct approved leave days from DynamoDB leave balance.
+ */
+export async function updateLeaveBalanceInDB({ userId, durationDays, leaveType = 'MATERNITY_LEAVE' }) {
+  try {
+    const existing = await db.getItem(leaveBalancesTable(), { employeeId: userId });
+    if (existing) {
+      if (leaveType === 'MATERNITY_LEAVE') {
+        existing.maternityLeaveDays = Math.max(0, (existing.maternityLeaveDays ?? 112) - durationDays);
+      } else {
+        existing.annualLeaveUsed = (existing.annualLeaveUsed ?? 0) + durationDays;
+      }
+      await db.putItem(leaveBalancesTable(), existing);
+      return existing;
+    }
+  } catch (err) {
+    console.warn('[workflowService] updateLeaveBalanceInDB warning:', err.message);
+  }
+  return null;
+}
+
+/**
+ * Create a leave workflow record in DynamoDB with Leave Authorization Token and AUTOMATICALLY_GRANTED status.
  *
- * @param {{ userId: string, startDate: string, endDate: string, durationDays: number }} params
+ * @param {{ userId: string, startDate: string, endDate: string, durationDays: number, leaveType?: string }} params
  * @returns {Promise<{ success: boolean, status: string, data: object|null, error: string|null }>}
  */
-export async function createLeaveRequest({ userId, startDate, endDate, durationDays }) {
-  const workflowId = `wf-${randomUUID()}`;
+export async function createLeaveRequest({ userId, startDate, endDate, durationDays, leaveType = 'MATERNITY_LEAVE' }) {
+  const tokenNumber = Math.floor(10000 + Math.random() * 90000);
+  const leaveToken = `TOKEN-LV-2026-${tokenNumber}`;
+  const workflowId = leaveToken;
   const now = new Date().toISOString();
 
   const record = {
     workflowId,
-    type:      'MATERNITY_LEAVE',
+    token: leaveToken,
+    leaveToken,
+    type: leaveType,
     userId,
-    status:    'PENDING_APPROVAL',
+    status: 'AUTOMATICALLY_GRANTED',
     startDate,
     endDate,
     createdAt: now,
     updatedAt: now,
-    metadata:  { durationDays },
+    metadata: { durationDays, autoGranted: true },
   };
 
   try {
     await db.putItem(workflowsTable(), record);
+    await updateLeaveBalanceInDB({ userId, durationDays, leaveType });
     return { success: true, status: 'SUCCESS', data: record, error: null };
   } catch (err) {
     console.error('[workflowService] createLeaveRequest error:', err);

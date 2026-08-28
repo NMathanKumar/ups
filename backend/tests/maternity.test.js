@@ -295,7 +295,7 @@ describe('Maternity Workflow — Successful End-to-End', () => {
     const leaveResult = res.toolResults.find((r) => r.tool === 'createLeaveRequest');
     expect(leaveResult.success).toBe(true);
     expect(leaveResult.status).toBe('SUCCESS');
-    expect(leaveResult.data.workflowId).toMatch(/^wf-/);
+    expect(leaveResult.data.workflowId).toMatch(/^(wf-|TOKEN-LV-)/);
     expect(leaveResult.data.type).toBe('MATERNITY_LEAVE');
     expect(leaveResult.data.startDate).toBe('2026-09-10');
     expect(leaveResult.data.endDate).toBe('2026-12-08');
@@ -311,7 +311,7 @@ describe('Maternity Workflow — Successful End-to-End', () => {
     expect(hrTask.success).toBe(true);
     expect(hrTask.data.category).toBe('HR');
     expect(hrTask.data.title).toMatch(/maternity|leave/i);
-    expect(hrTask.data.workflowId).toMatch(/^wf-/);
+    expect(hrTask.data.workflowId).toMatch(/^(wf-|TOKEN-LV-)/);
   });
 
   test('IT task created when employee (EMP001) has assets', async () => {
@@ -351,7 +351,7 @@ describe('Maternity Workflow — Successful End-to-End', () => {
 
     expect(res.answer).toMatch(/September/i);
     expect(res.answer).toMatch(/December/i);
-    expect(res.answer).toMatch(/Pending HR approval/i);
+    expect(res.answer).toMatch(/GRANTED/i);
   });
 
   test('sources include KB policy document', async () => {
@@ -406,8 +406,8 @@ describe('createLeaveRequest tool — Direct', () => {
     });
     expect(r.success).toBe(true);
     expect(r.status).toBe('SUCCESS');
-    expect(r.data.workflowId).toMatch(/^wf-/);
-    expect(r.data.status).toBe('PENDING_APPROVAL');
+    expect(r.data.workflowId).toMatch(/^(wf-|TOKEN-LV-)/);
+    expect(r.data.status).toBe('AUTOMATICALLY_GRANTED');
   });
 
   test('returns FAILED when DynamoDB write throws', async () => {
