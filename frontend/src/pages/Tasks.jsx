@@ -181,7 +181,7 @@ export default function Tasks() {
       </div>
 
       {/* Section Tabs */}
-      <div className="flex gap-2 mb-4" role="tablist" aria-label="Task sections">
+      <div className="flex gap-3 mb-6" role="tablist" aria-label="Task sections">
         {SECTIONS.map(sec => {
           const count = tasks.filter(t => {
             if (sec.id === 'completed') return t.checked
@@ -189,27 +189,39 @@ export default function Tasks() {
             return !t.checked
           }).length
 
+          const isActive = activeSection === sec.id
+
           return (
             <button
               key={sec.id}
               id={`tasks-tab-${sec.id}`}
-              className={`btn ${activeSection === sec.id ? 'btn-primary' : 'btn-secondary'}`}
+              className="btn flex items-center gap-2"
               onClick={() => handleSectionChange(sec.id)}
               role="tab"
-              aria-selected={activeSection === sec.id}
-              style={{ padding: '8px 16px', fontSize: '0.8125rem' }}
+              aria-selected={isActive}
+              style={{
+                padding: '10px 20px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 12,
+                transition: 'all 0.2s ease',
+                background: isActive ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : '#ffffff',
+                color: isActive ? '#ffffff' : '#475569',
+                border: isActive ? '1px solid #4338ca' : '1px solid #e2e8f0',
+                boxShadow: isActive ? '0 4px 14px rgba(99, 102, 241, 0.35)' : '0 2px 4px rgba(0,0,0,0.02)',
+              }}
             >
-              <Icon name={sec.icon} size={14} />
-              {sec.label}
+              <Icon name={sec.icon} size={16} />
+              <span>{sec.label}</span>
               {count > 0 && (
                 <span style={{
-                  background: activeSection === sec.id ? 'rgba(255,255,255,0.25)' : 'var(--gray-300)',
-                  color: activeSection === sec.id ? 'white' : 'var(--gray-700)',
-                  borderRadius: 'var(--radius-full)',
-                  fontSize: '0.6875rem',
+                  background: isActive ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
+                  color: isActive ? '#ffffff' : '#6366f1',
+                  borderRadius: 999,
+                  fontSize: '0.75rem',
                   fontWeight: 700,
-                  padding: '2px 8px',
-                  marginLeft: 6,
+                  padding: '2px 9px',
+                  marginLeft: 4,
                 }}>
                   {count}
                 </span>
@@ -219,19 +231,21 @@ export default function Tasks() {
         })}
       </div>
 
-      {/* Task List */}
-      <div className="card shadow-sm" style={{ borderRadius: 14 }}>
-        <div className="card-body p-4" style={{ display: 'flex', flexDirection: 'column', gap: 10 }} role="list" aria-label={`${activeSection} tasks`}>
+      {/* Task List Card */}
+      <div className="card shadow-sm" style={{ borderRadius: 16, border: '1px solid #e2e8f0', background: '#ffffff', overflow: 'hidden' }}>
+        <div className="card-body p-4" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} role="list" aria-label={`${activeSection} tasks`}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-tertiary)' }}>
-              <Icon name="refresh" size={24} className="animate-spin mb-2" />
-              <p>Loading tasks from AWS API Gateway...</p>
+            <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-tertiary)' }}>
+              <Icon name="refresh" size={28} className="animate-spin mb-2" />
+              <p style={{ fontSize: '0.9375rem', color: '#475569', fontWeight: 500 }}>Connecting to AWS DynamoDB &amp; API Gateway...</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-tertiary)' }}>
-              <Icon name="check" size={32} style={{ color: 'var(--success-500)' }} />
-              <p style={{ marginTop: 8, fontWeight: 500, color: 'var(--text-primary)' }}>No tasks in this section</p>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>You're all caught up!</p>
+            <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-tertiary)' }}>
+              <div style={{ width: 54, height: 54, borderRadius: '50%', background: '#f0fdf4', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <Icon name="check" size={28} style={{ color: '#16a34a' }} />
+              </div>
+              <p style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', margin: '4px 0' }}>All Caught Up!</p>
+              <p style={{ fontSize: '0.875rem', color: '#64748b' }}>No pending tasks in this view.</p>
             </div>
           ) : (
             filtered.map(task => (
@@ -241,28 +255,46 @@ export default function Tasks() {
         </div>
       </div>
 
-      {/* Summary Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+      {/* Summary Metric Row (3 Column Grid) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 24 }}>
         {[
-          { label: 'Total Tasks', value: tasks.length, color: 'var(--brand-600)', bg: 'var(--brand-50)' },
-          { label: 'Pending', value: tasks.filter(t => !t.checked).length, color: 'var(--warning-600)', bg: 'var(--warning-50)' },
-          { label: 'Completed', value: tasks.filter(t => t.checked).length, color: 'var(--success-600)', bg: 'var(--success-50)' },
+          { label: 'Total Tasks', value: tasks.length, color: '#4f46e5', bg: '#eef2ff', icon: 'tasks', border: '#c7d2fe', bar: 'linear-gradient(90deg, #6366f1, #818cf8)' },
+          { label: 'Pending Action', value: tasks.filter(t => !t.checked).length, color: '#d97706', bg: '#fffbeb', icon: 'zap', border: '#fef3c7', bar: 'linear-gradient(90deg, #f59e0b, #fbbf24)' },
+          { label: 'Completed', value: tasks.filter(t => t.checked).length, color: '#16a34a', bg: '#f0fdf4', icon: 'check', border: '#bbf7d0', bar: 'linear-gradient(90deg, #10b981, #34d399)' },
         ].map(s => (
-          <div key={s.label} className="card p-4" style={{ display: 'flex', alignItems: 'center', gap: 14, borderRadius: 12 }}>
+          <div key={s.label} style={{
+            background: '#ffffff',
+            border: `1px solid ${s.border}`,
+            borderRadius: 16,
+            padding: 20,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            boxShadow: '0 4px 14px rgba(0,0,0,0.03)',
+            transition: 'all 0.2s ease',
+          }}>
             <div style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
+              width: 52,
+              height: 52,
+              borderRadius: 14,
               background: s.bg,
               display: 'flex',
               alignItems: 'center',
-              justify: 'center'
+              justifyContent: 'center',
+              flexShrink: 0,
             }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 700, color: s.color }}>{s.value}</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color }}>{s.value}</span>
             </div>
-            <div>
-              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{s.label}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>AWS DynamoDB Synced</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a' }}>{s.label}</div>
+              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, display: 'inline-block' }} />
+                AWS DynamoDB Synced
+              </div>
+              {/* Progress visual */}
+              <div style={{ width: '100%', height: 4, background: '#f1f5f9', borderRadius: 999, marginTop: 8, overflow: 'hidden' }}>
+                <div style={{ width: tasks.length ? `${(s.value / tasks.length) * 100}%` : '0%', height: '100%', background: s.bar, borderRadius: 999 }} />
+              </div>
             </div>
           </div>
         ))}
