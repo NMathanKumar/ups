@@ -235,3 +235,47 @@ export async function getOnboardingStatus({ userId, employeeId }) {
     return { success: false, status: 'FAILED', data: null, error: err.message };
   }
 }
+
+// ── Employee Transfer ────────────────────────────────────────────────────────
+
+/**
+ * Persist employee department transfer workflow in DynamoDB.
+ *
+ * @param {{ userId: string, targetDepartment: string, targetManager?: string, reason?: string }} params
+ * @returns {Promise<{ success: boolean, status: string, data: object|null, error: string|null }>}
+ */
+export async function transferEmployeeRecord({ userId, targetDepartment, targetManager = 'HR Manager', reason = '' }) {
+  const workflowId = `trf-${randomUUID()}`;
+  const now = new Date().toISOString();
+
+  const record = {
+    workflowId,
+    type:             'EMPLOYEE_TRANSFER',
+    userId,
+    status:           'COMPLETED',
+    targetDepartment,
+    targetManager,
+    reason:           reason || 'Internal Department Transfer & Mobility Request',
+    createdAt:        now,
+    updatedAt:        now,
+  };
+
+  try {
+    await db.putItem(workflowsTable(), record);
+    await createHRTask({
+      userId,
+      workflowId,
+      title: `Process employee transfer to ${targetDepartment} (Manager: ${targetManager})`,
+    });
+    await createITTicket({
+      userId,
+      workflowId,
+      assets: [{ type: 'IT Security & SSO Re-configuration', assetId: `PERM-${userId}` }],
+    });
+
+    return { success: true, status: 'SUCCESS', data: record, error: null };
+  } catch (err) {
+    console.error('[workflowService] transferEmployeeRecord error:', err);
+    return { success: false, status: 'FAILED', data: null, error: err.message };
+  }
+}

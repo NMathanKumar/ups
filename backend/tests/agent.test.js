@@ -188,12 +188,16 @@ describe('Agent Foundation (Step 9 — regression guard)', () => {
   describe('4. Tool Execution — NOT_IMPLEMENTED Safety', () => {
     test('unimplemented tools never return fake success', async () => {
       // Remaining unimplemented WRITE tools
-      const stubs = ['allocateResources', 'transferEmployee'];
+      const stubs = ['allocateResources'];
       for (const name of stubs) {
         const r = await executeTool(name, { userId: 'u1' });
         expect(r.success).toBe(false);
         expect(r.status).toBe('NOT_IMPLEMENTED');
       }
+      // transferEmployee is implemented
+      const trfResult = await executeTool('transferEmployee', { userId: 'EMP001', targetDepartment: 'Engineering' });
+      expect(trfResult.success).toBe(true);
+      expect(trfResult.status).toBe('SUCCESS');
       // createHRTask with no userId returns FAILED (validation)
       const hrResult = await executeTool('createHRTask', { userId: '', title: '' });
       expect(hrResult.success).toBe(false);
@@ -389,8 +393,8 @@ describe('Enterprise Tool Delegation (Step 11)', () => {
   });
 
   test('Unimplemented WRITE tools return NOT_IMPLEMENTED', async () => {
-    // createLeaveRequest/createHRTask/createITTicket/createOnboarding/createTask are now implemented
-    const writeTools = ['allocateResources', 'transferEmployee'];
+    // createLeaveRequest/createHRTask/createITTicket/createOnboarding/createTask/transferEmployee are now implemented
+    const writeTools = ['allocateResources'];
     for (const name of writeTools) {
       const r = await executeTool(name, { userId: 'u1' });
       expect(r.success).toBe(false);

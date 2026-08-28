@@ -66,12 +66,13 @@ export default function Sidebar({ activePage, onNavigate, isOpen, currentUser, o
   }, [calculateCounts])
 
   const NAV_ITEMS = [
-    { id: 'dashboard', label: 'Overview',     icon: 'home' },
-    { id: 'assistant', label: 'AI Assistant', icon: 'bot',    badge: null },
-    { id: 'tasks',     label: 'My Tasks',     icon: 'tasks',  badge: taskCount > 0 ? String(taskCount) : null },
-    { id: 'learning',  label: 'Learning',     icon: 'book',   badge: learningCount > 0 ? String(learningCount) : null },
-    { id: 'itsupport', label: 'IT Support',   icon: 'monitor' },
-    { id: 'policies',  label: 'Policies',     icon: 'file' },
+    { id: 'dashboard', label: 'Overview',          icon: 'home' },
+    { id: 'assistant', label: 'AI Assistant',      icon: 'bot',    badge: null },
+    { id: 'transfers', label: 'Resource Mobility', icon: 'users' },
+    { id: 'tasks',     label: 'My Tasks',          icon: 'tasks',  badge: taskCount > 0 ? String(taskCount) : null },
+    { id: 'learning',  label: 'Learning',          icon: 'book',   badge: learningCount > 0 ? String(learningCount) : null },
+    { id: 'itsupport', label: 'IT Support',        icon: 'monitor' },
+    { id: 'policies',  label: 'Policies',          icon: 'file' },
   ]
 
   const WORKSPACE_ITEMS = [

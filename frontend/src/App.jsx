@@ -8,11 +8,13 @@ import Learning from './pages/Learning'
 import ITSupport from './pages/ITSupport'
 import Policies from './pages/Policies'
 import Settings from './pages/Settings'
+import Transfers from './pages/Transfers'
 import Auth from './pages/Auth'
 
 const PAGES = {
   dashboard: Dashboard,
   assistant: Assistant,
+  transfers: Transfers,
   tasks: Tasks,
   learning: Learning,
   itsupport: ITSupport,
@@ -23,6 +25,7 @@ const PAGES = {
 const PAGE_LABELS = {
   dashboard: 'Overview',
   assistant: 'AI Assistant',
+  transfers: 'Resource Mobility',
   tasks: 'My Tasks',
   learning: 'Learning',
   itsupport: 'IT Support',

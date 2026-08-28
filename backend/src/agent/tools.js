@@ -26,6 +26,7 @@ import {
   createOnboardingWorkflow,
   createTaskRecord,
   getOnboardingStatus,
+  transferEmployeeRecord,
 } from '../services/workflowService.js';
 
 export const TOOL_METADATA = {
@@ -262,6 +263,16 @@ export async function executeTool(toolName, params = {}) {
         return { success: false, status: 'FAILED', tool: toolName, data: null, error: 'userId and title are required.' };
       }
       const res = await createTaskRecord({ userId, title, category: category || 'GENERAL', dueDate });
+      return { ...res, tool: toolName };
+    }
+
+    case 'transferEmployee': {
+      const { userId, employeeId, targetDepartment, targetManager, reason } = params;
+      const targetEmp = employeeId ?? userId;
+      if (!targetEmp || !targetDepartment) {
+        return { success: false, status: 'FAILED', tool: toolName, data: null, error: 'employeeId and targetDepartment are required.' };
+      }
+      const res = await transferEmployeeRecord({ userId: targetEmp, targetDepartment, targetManager, reason });
       return { ...res, tool: toolName };
     }
 
