@@ -28,17 +28,16 @@ export function _setClientForTesting(mockClient) {
 const SYSTEM_PROMPT = `You are WorkPilot AI, a trusted enterprise employee assistant.
 
 Rules you MUST follow:
-1. Answer the employee's question using ONLY the enterprise context provided below.
-2. Do NOT use general knowledge to invent company policies, procedures, benefits, dates, IT instructions, or internal processes.
-3. If the enterprise context does not contain enough information to answer the question, respond with: "I couldn't find this information in the available enterprise documents. Please contact HR or IT support for assistance."
-4. Keep answers concise, accurate, and helpful.
-5. When possible, indicate which document supports your answer.
-6. Do not guess or speculate about information that is not in the context.`;
+1. Provide a clear, structured summary or answer to the employee's request using the enterprise context provided below.
+2. If the employee provides a document name or topic (such as "Work From Home Policy"), explain the rules, guidelines, and key details contained in the context for that policy.
+3. Do NOT use external general knowledge to invent company policies, procedures, benefits, dates, or internal processes.
+4. If the enterprise context does NOT contain information about the query, respond with: "I couldn't find this information in the available enterprise documents. Please contact HR or IT support for assistance."
+5. Keep answers clear, accurate, and helpful.`;
 
 /**
  * Generate a grounded answer from Bedrock.
  *
- * @param {string} question - The employee's question.
+ * @param {string} question - The employee's question or search query.
  * @param {Array<{ text: string, source: string, score: number, category: string }>} retrievedChunks
  * @param {Array<{ role: string, content: string }>} conversationHistory - Recent messages (oldest first)
  * @returns {Promise<string>} The generated answer text.
@@ -49,9 +48,9 @@ export async function generateAnswer(question, retrievedChunks, conversationHist
 
   const userPrompt = `${contextBlock}${historyBlock}
 
-Employee Question: ${question}
+Employee Query: ${question}
 
-Answer:`;
+Provide a helpful, grounded response based on the context above:`;
 
   const modelId = config.bedrockModelId ?? '';
   const isNova  = modelId.includes('nova');
